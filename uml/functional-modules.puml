@@ -1,0 +1,56 @@
+@startuml
+title PetLink 功能模块图（M01～M08）
+
+skinparam shadowing false
+skinparam defaultTextAlignment left
+skinparam nodesep 30
+skinparam ranksep 38
+skinparam rectangle {
+  RoundCorner 8
+}
+
+top to bottom direction
+
+' together 中必须直接声明元素，不能只写已经声明过的别名
+together {
+  rectangle "<b>M01 用户与认证</b>\n• 注册\n• 登录 / JWT认证\n• 个人资料维护" as M01
+  rectangle "<b>M02 救助线索</b>\n• 发布救助线索\n• 查看本人线索\n• 修改待审核线索\n• 撤回待审核线索\n• ADMIN 审核线索" as M02
+}
+
+together {
+  rectangle "<b>M03 救助任务</b>\n• 查看待接取线索\n• 接取救助任务\n• 查看本人救助任务 / 任务详情\n• 开始救助\n• 填写救助记录\n• 提交救助结果（成功 / 失败）\n• ADMIN 取消异常任务\n• ADMIN 处理失败任务" as M03
+  rectangle "<b>M04 动物档案</b>\n• 救助成功后建档\n• 维护动物基本信息\n• 动物图片管理\n• 添加 / 查看健康记录\n• 维护动物领养状态\n• 公开动物浏览 / 筛选 / 详情" as M04
+}
+
+together {
+  rectangle "<b>M05 领养管理</b>\n• 提交领养申请\n• 查看本人申请 / 审核状态\n• 撤回本人待审核申请\n• ADMIN 审核领养申请\n• 批准后系统生成领养记录\n• 查看本人领养记录\n• RESCUER 查看负责动物领养情况（只读）" as M05
+  rectangle "<b>M06 回访管理</b>\n• 提交本人领养回访\n• 上传生活照片\n• 查看本人回访\n• RESCUER 查看负责动物回访（只读）\n• ADMIN 查看全部回访" as M06
+}
+
+together {
+  rectangle "<b>M07 收藏与公告</b>\n• 收藏动物\n• 取消收藏\n• 查看本人收藏\n• 查看已发布公告\n• ADMIN 新增 / 修改公告\n• ADMIN 发布 / 撤回公告" as M07
+  rectangle "<b>M08 后台管理</b>\n• 用户管理：查看 / 启用 / 禁用\n• 救助人员管理：USER → RESCUER\n• 救助业务监管\n• 动物 / 领养业务监管\n• 数据统计" as M08
+}
+
+' 同一行
+M01 -[hidden]right-> M02
+M03 -[hidden]right-> M04
+M05 -[hidden]right-> M06
+M07 -[hidden]right-> M08
+
+' 两条纵向列约束
+M01 -[hidden]down-> M03
+M03 -[hidden]down-> M05
+M05 -[hidden]down-> M07
+
+M02 -[hidden]down-> M04
+M04 -[hidden]down-> M06
+M06 -[hidden]down-> M08
+
+legend bottom
+  PetLink 流浪动物救助与领养服务平台
+  文件上传属于公共服务，不单独作为一级业务模块。
+  本图仅展示 M01～M08 业务功能划分，不展开技术分层、REST 接口或数据表。
+endlegend
+
+@enduml

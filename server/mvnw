@@ -1,0 +1,40 @@
+#!/bin/sh
+set -eu
+MVN_VERSION=3.9.9
+MVN_SHA256=4ec3f26fb1a692473aea0235c300bd20f0f9fe741947c82c1234cefd76ac3a3c
+BASE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+DIST="$BASE/.mvn/dist/apache-maven-$MVN_VERSION"
+ZIP="$BASE/.mvn/dist/apache-maven-$MVN_VERSION-bin.zip"
+MARKER="$DIST/.petlink-maven-sha256"
+
+verified_install=false
+if [ -x "$DIST/bin/mvn" ] && [ -f "$MARKER" ]; then
+  installed_sha=$(tr -d '\r\n ' < "$MARKER")
+  [ "$installed_sha" = "$MVN_SHA256" ] && verified_install=true
+fi
+
+if [ "$verified_install" != true ]; then
+  mkdir -p "$BASE/.mvn/dist"
+  rm -rf "$DIST" "$ZIP"
+  URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MVN_VERSION/apache-maven-$MVN_VERSION-bin.zip"
+  echo "Downloading Apache Maven $MVN_VERSION ..."
+  if command -v curl >/dev/null 2>&1; then curl -fsSL "$URL" -o "$ZIP";
+  elif command -v wget >/dev/null 2>&1; then wget -q "$URL" -O "$ZIP";
+  else echo "curl or wget is required for first Maven bootstrap" >&2; exit 1; fi
+
+  actual_sha=""
+  if command -v sha256sum >/dev/null 2>&1; then actual_sha=$(sha256sum "$ZIP" | awk '{print $1}');
+  elif command -v shasum >/dev/null 2>&1; then actual_sha=$(shasum -a 256 "$ZIP" | awk '{print $1}');
+  elif command -v openssl >/dev/null 2>&1; then actual_sha=$(openssl dgst -sha256 "$ZIP" | awk '{print $NF}');
+  else echo "sha256sum, shasum, or openssl is required to verify Maven" >&2; rm -f "$ZIP"; exit 1; fi
+  if [ "$actual_sha" != "$MVN_SHA256" ]; then
+    echo "Maven SHA-256 mismatch. expected=$MVN_SHA256 actual=$actual_sha" >&2
+    rm -f "$ZIP"
+    exit 1
+  fi
+
+  command -v unzip >/dev/null 2>&1 || { echo "unzip is required" >&2; exit 1; }
+  unzip -q -o "$ZIP" -d "$BASE/.mvn/dist"
+  printf '%s\n' "$MVN_SHA256" > "$MARKER"
+fi
+exec "$DIST/bin/mvn" "$@"

@@ -1,0 +1,26 @@
+@startuml
+title RescueClue 救助线索状态图
+
+skinparam shadowing false
+
+[*] --> PENDING_REVIEW : USER / RESCUER 发布线索\n/ 系统创建 RescueClue
+
+PENDING_REVIEW --> WAITING_ACCEPT : ADMIN 审核通过\n/ 系统记录审核信息并更新状态
+PENDING_REVIEW --> REJECTED : ADMIN 审核驳回\n[驳回原因必填]\n/ 系统记录审核信息并更新状态
+PENDING_REVIEW --> WITHDRAWN : 发布人发起撤回\n[仅本人 PENDING_REVIEW 线索]\n/ 系统条件更新状态
+
+WAITING_ACCEPT --> CONVERTED : RESCUER 发起接取\n/ 系统条件更新并创建 RescueTask
+
+CONVERTED --> WAITING_ACCEPT : ADMIN 取消任务\n/ 系统自动重新开放线索
+
+CONVERTED --> WAITING_ACCEPT : ADMIN 处理 FAILED 任务\n[决定重新开放]
+
+CONVERTED --> CLOSED : RescueTask 救助成功\n/ 系统完成建档后关闭线索
+
+CONVERTED --> CLOSED : ADMIN 处理 FAILED 任务\n[决定关闭线索]
+
+REJECTED --> [*]
+WITHDRAWN --> [*]
+CLOSED --> [*]
+
+@enduml

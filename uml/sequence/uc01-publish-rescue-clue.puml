@@ -1,0 +1,107 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-01 发布救助线索
+
+actor "USER / RESCUER" as User
+participant "移动端\nUniApp" as App
+participant "RescueClueController" as C
+participant "IdempotencyService" as I
+participant "RescueClueService" as S
+participant "TemporaryFileMapper" as TFM
+participant "RescueClueMapper" as CM
+participant "RescueClueImageMapper" as CIM
+participant "OperationLogMapper" as OLM
+participant "FileService" as FS
+database "MySQL" as DB
+
+note over App,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+User -> App : 填写线索并点击提交
+App -> C : POST /api/rescue-clues/idempotency-keys
+C -> I : issue(userId)
+I --> C : idempotencyKey + expiresAt
+C --> App : 201 Created
+
+App -> C : POST /api/rescue-clues\nIdempotency-Key + DTO + imageTokens
+C -> S : createClue(userId, key, dto)
+
+S -> I : 规范化 DTO + 当前用户 + imageTokens原顺序\n计算 SHA-256\natomic compute
+alt key 无效 / 已过期
+  I --> S : INVALID
+  S --> C : 40005 INVALID_IDEMPOTENCY_KEY
+  C --> App : 400
+else key = PROCESSING
+  I --> S : PROCESSING
+  S --> C : 40905 IDEMPOTENCY_REQUEST_IN_PROGRESS
+  C --> App : 409
+else key = SUCCEEDED 且指纹一致
+  I --> S : cached response
+  S --> C : clueId + status + createdAt
+  C --> App : 200 OK
+else key = SUCCEEDED 但指纹不同
+  I --> S : REUSED
+  S --> C : 40906 IDEMPOTENCY_KEY_REUSED
+  C --> App : 409
+else UNUSED → PROCESSING 成功
+  S -> DB : BEGIN
+
+  S -> TFM : SELECT tokens\nORDER BY id ASC FOR UPDATE
+  TFM -> DB : SELECT ... FOR UPDATE
+  DB --> TFM : rows
+  TFM --> S : rows
+
+  S -> S : 校验 token 数量1~9且不重复\nowner/status/expiry/type/size
+
+  S -> CM : INSERT RescueClue\nstatus=PENDING_REVIEW
+  CM -> DB : INSERT
+  DB --> CM : clueId
+  CM --> S : clueId
+
+  loop 按客户端 imageTokens 原顺序
+    S -> FS : generateFormalPath(RESCUE_CLUE)
+    FS --> S : formalPath
+    S -> CIM : INSERT RescueClueImage\nsortOrder=1..N
+    CIM -> DB : INSERT
+
+    S -> TFM : UPDATE TemporaryFile\nBOUND + businessType=RESCUE_CLUE\nbusinessId=clueId + formalPath
+    TFM -> DB : conditional UPDATE
+    DB --> TFM : affectedRows=1
+  end
+
+  S -> OLM : INSERT OperationLog\nRESCUE_CLUE + CREATE\nNULL→PENDING_REVIEW
+  OLM -> DB : INSERT
+
+  loop 每张图片
+    S -> FS : copy temp → formal
+    FS --> S : ok
+  end
+
+  break 任一数据库写入、OperationLog写入、临时文件校验或 formal copy 失败
+    S -> DB : ROLLBACK
+    S -> FS : 删除本事务已创建正式副本
+    S -> I : PROCESSING → UNUSED
+    S --> C : 统一业务异常
+    C --> App : 4xx / 5xx
+  end
+
+  S -> DB : COMMIT
+  DB --> S : committed
+
+  S -> I : afterCommit\nPROCESSING → SUCCEEDED\n缓存 clueId + status + createdAt
+  S -> FS : 删除原临时文件
+  FS --> S : done / deferred
+  S -> TFM : 安全删除 BOUND technical row
+  TFM -> DB : DELETE verified rows
+  DB --> TFM : done / deferred
+
+  S --> C : clueId + status=PENDING_REVIEW + createdAt
+  C --> App : 201 Created
+end
+
+@enduml
+

@@ -1,0 +1,80 @@
+@startuml
+title PetLink V1.0 系统总用例图（概览）
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+actor "未登录访客\nVISITOR" as Visitor
+actor "普通用户\nUSER" as User
+
+rectangle "PetLink 流浪动物救助与领养服务平台" {
+    package "公共服务" {
+        usecase "注册" as O_Register
+        usecase "登录" as O_Login
+        usecase "浏览动物" as O_BrowseAnimal
+        usecase "查看公告" as O_ViewNotice
+    }
+
+    package "救助业务" {
+        usecase "发布救助线索\nUC-01" as O_PublishClue
+        usecase "审核救助线索\nUC-02" as O_AuditClue
+        usecase "接取救助任务\nUC-03" as O_AcceptTask
+        usecase "更新并完成救助任务\nUC-04" as O_UpdateTask
+        usecase "维护动物档案" as O_EditAnimal
+        usecase "管理异常救助任务" as O_AbnormalTask
+    }
+
+    package "领养业务" {
+        usecase "提交领养申请\nUC-05" as O_ApplyAdoption
+        usecase "审核领养申请\nUC-06" as O_AuditAdoption
+        usecase "提交领养回访\nUC-07" as O_SubmitFollowUp
+    }
+
+    package "后台管理" {
+        usecase "用户与救助人员管理" as O_UserManage
+        usecase "公告管理" as O_NoticeManage
+        usecase "数据统计" as O_Statistics
+    }
+}
+
+actor "救助人员\nRESCUER" as Rescuer
+actor "系统管理员\nADMIN" as Admin
+
+Visitor -- O_Register
+Visitor -- O_BrowseAnimal
+Visitor -- O_ViewNotice
+
+User -- O_Login
+User -- O_BrowseAnimal
+User -- O_ViewNotice
+User -- O_PublishClue
+User -- O_ApplyAdoption
+User -- O_SubmitFollowUp
+
+O_Login -- Rescuer
+O_BrowseAnimal -- Rescuer
+O_ViewNotice -- Rescuer
+O_PublishClue -- Rescuer
+O_AcceptTask -- Rescuer
+O_UpdateTask -- Rescuer
+O_EditAnimal -- Rescuer
+O_ApplyAdoption -- Rescuer
+O_SubmitFollowUp -- Rescuer
+
+O_Login -- Admin
+O_AuditClue -- Admin
+O_AbnormalTask -- Admin
+O_EditAnimal -- Admin
+O_AuditAdoption -- Admin
+O_UserManage -- Admin
+O_NoticeManage -- Admin
+O_Statistics -- Admin
+
+note bottom of Visitor
+VISITOR 仅为 UML 外部参与者，
+不是 user.role_code 中的角色。
+end note
+
+@enduml

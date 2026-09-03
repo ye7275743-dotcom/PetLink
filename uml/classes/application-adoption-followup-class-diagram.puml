@@ -1,0 +1,89 @@
+@startuml
+title PetLink 应用层类图（b-1）M05～M06 V1.0
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype polyline
+skinparam nodesep 28
+skinparam ranksep 34
+skinparam packageStyle rectangle
+top to bottom direction
+
+package "M05 领养管理" as M05 {
+  class AdoptionApplicationController
+  class AdoptionService {
+    +createApplication()
+    +withdrawApplication()
+    +auditApplication()
+    +getMyRecords()
+    +getAdoptionOverview()
+  }
+
+  interface AdoptionApplicationMapper
+  interface AdoptionRecordMapper
+
+  AdoptionApplicationController --> AdoptionService
+  AdoptionService --> AdoptionApplicationMapper
+  AdoptionService --> AdoptionRecordMapper
+}
+
+package "M06 回访管理" as M06 {
+  class FollowUpController
+  class FollowUpService {
+    +createFollowUp()
+    +getFollowUps()
+  }
+
+  interface FollowUpRecordMapper
+  interface FollowUpImageMapper
+
+  FollowUpController --> FollowUpService
+  FollowUpService --> FollowUpRecordMapper
+  FollowUpService --> FollowUpImageMapper
+}
+
+package "共享持久层 / 文件支撑" as SHARED {
+  interface AnimalMapper
+  interface RescueTaskMapper
+  interface TemporaryFileMapper
+  interface OperationLogMapper
+
+  class FileService <<shared>> {
+    +generateFormalPath()
+    +copyToFormal()
+    +deleteTemporary()
+  }
+
+  AnimalMapper -[hidden]right-> RescueTaskMapper
+  RescueTaskMapper -[hidden]right-> TemporaryFileMapper
+  TemporaryFileMapper -[hidden]right-> OperationLogMapper
+}
+
+M05 -[hidden]right-> M06
+M05 -[hidden]down-> SHARED
+M06 -[hidden]down-> SHARED
+
+' M05 dependencies.
+AdoptionService --> AnimalMapper
+AdoptionService --> OperationLogMapper
+
+' M06 dependencies.
+FollowUpService --> AdoptionRecordMapper
+FollowUpService --> AnimalMapper
+FollowUpService --> RescueTaskMapper
+FollowUpService --> TemporaryFileMapper
+FollowUpService --> FileService
+
+note bottom of FileService
+与应用层类图（a）中的 FileService
+为同一共享物理文件服务；
+M06 回访图片复用该服务。
+end note
+
+note bottom of OperationLogMapper
+仅提供 insert / select；
+业务层不提供 update / delete。
+end note
+
+@enduml
+

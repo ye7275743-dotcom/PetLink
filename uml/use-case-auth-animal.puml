@@ -1,0 +1,73 @@
+@startuml
+title PetLink V1.0 认证、动物浏览与收藏用例图
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+actor "未登录访客\nVISITOR" as Visitor
+actor "普通用户\nUSER" as User
+
+rectangle "PetLink：认证、动物浏览与收藏" {
+    package "用户与认证" {
+        usecase "注册" as A_Register
+        usecase "登录" as A_Login
+        usecase "维护个人资料" as A_Profile
+    }
+
+    package "动物浏览与收藏" {
+        usecase "浏览动物" as A_BrowseAnimal
+        usecase "筛选动物" as A_FilterAnimal
+        usecase "查看动物详情" as A_AnimalDetail
+        usecase "收藏动物" as A_Favorite
+        usecase "取消收藏" as A_Unfavorite
+        usecase "查看本人收藏列表" as A_ViewFavorites
+    }
+
+    package "公告浏览" {
+        usecase "查看公告" as A_ViewNotice
+    }
+}
+
+actor "救助人员\nRESCUER" as Rescuer
+actor "系统管理员\nADMIN" as Admin
+
+Visitor -- A_Register
+Visitor -- A_BrowseAnimal
+Visitor -- A_FilterAnimal
+Visitor -- A_AnimalDetail
+Visitor -- A_ViewNotice
+
+User -- A_Login
+User -- A_Profile
+User -- A_BrowseAnimal
+User -- A_FilterAnimal
+User -- A_AnimalDetail
+User -- A_Favorite
+User -- A_Unfavorite
+User -- A_ViewFavorites
+User -- A_ViewNotice
+
+A_Login -- Rescuer
+A_Profile -- Rescuer
+A_BrowseAnimal -- Rescuer
+A_FilterAnimal -- Rescuer
+A_AnimalDetail -- Rescuer
+A_Favorite -- Rescuer
+A_Unfavorite -- Rescuer
+A_ViewFavorites -- Rescuer
+A_ViewNotice -- Rescuer
+
+A_Login -- Admin
+A_Profile -- Admin
+A_BrowseAnimal -- Admin
+A_FilterAnimal -- Admin
+A_AnimalDetail -- Admin
+A_ViewNotice -- Admin
+
+note bottom of A_BrowseAnimal
+公开领养列表只展示 AVAILABLE 状态动物。
+end note
+
+@enduml

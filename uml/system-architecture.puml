@@ -1,0 +1,91 @@
+@startuml
+title PetLink 系统架构图
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+
+actor "PC管理端\nADMIN / RESCUER" as PCUser
+actor "移动用户端\nVISITOR / USER / RESCUER" as MobileUser
+
+rectangle "客户端层" {
+  component "Vue 3 PC 管理端\nElement Plus / Vite" as Web
+  component "UniApp 移动端\nVue 3" as Mobile
+}
+
+rectangle "Spring Boot 后端" {
+
+  component "Spring Security\nJWT Filter / RBAC\n公开接口 permitAll" as Security
+
+  component "REST Controller\n统一 API 入口" as Controller
+
+  component "统一异常处理\nGlobal Exception Handler" as ExceptionHandler
+
+  component "Service 业务层\n业务规则 / 权限校验" as Service
+
+  component "事务管理\nSpring Transaction" as Tx
+
+  component "文件服务\n上传 / 绑定 / 文件补偿" as FileService
+
+  component "定时文件清理任务\nTemporary / Orphan Cleanup" as Cleanup
+
+  component "持久层 Mapper\nMyBatis-Plus" as MP
+}
+
+database "MySQL 8.0\nPetLink Database" as DB
+
+folder "服务器本地文件系统" as FS {
+  folder "temporary/\n临时上传目录" as Temp
+  folder "uploads/\n正式文件目录" as Uploads
+}
+
+PCUser --> Web
+MobileUser --> Mobile
+
+Web --> Security : HTTPS / REST API
+Mobile --> Security : HTTPS / REST API
+
+Security --> Controller : 鉴权 / permitAll 放行
+Controller --> Service
+Controller ..> ExceptionHandler : 异常映射
+
+Tx ..> Service : @Transactional / AOP
+
+Service --> MP
+FileService --> MP
+MP --> DB
+
+Service --> FileService : 图片业务
+FileService --> Temp : 临时文件
+FileService --> Uploads : 正式文件
+
+Cleanup --> FileService : 文件清理逻辑
+Cleanup --> MP : 查询 temporary_file\n及业务引用
+
+note right of Security
+公开浏览、登录、注册等接口：
+permitAll
+
+受保护接口：
+JWT + RBAC 后端鉴权
+end note
+
+note right of Tx
+关键跨表业务使用事务：
+- 救助任务接取
+- 救助成功并建档
+- 领养批准
+- 关键状态变化 + OperationLog
+end note
+
+note right of FileService
+统一负责：
+- JPG/JPEG/PNG 校验
+- 单张 ≤ 5MB
+- UUID 文件名
+- temporary_file 绑定
+- copy → commit → cleanup
+end note
+
+@enduml

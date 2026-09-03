@@ -1,0 +1,75 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-03 RESCUER 接取救助任务
+
+actor "RESCUER" as Rescuer
+participant "移动端\nUniApp" as App
+participant "RescueTaskController" as C
+participant "RescueTaskService" as S
+participant "RescueClueMapper" as CM
+participant "RescueTaskMapper" as TM
+participant "OperationLogMapper" as OLM
+database "MySQL" as DB
+
+note over App,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+Rescuer -> App : 点击接取
+App -> C : POST /api/rescue-clues/{clueId}/accept
+C -> S : accept(clueId, rescuerId)
+
+S -> DB : BEGIN
+
+S -> CM : conditional UPDATE\nWHERE id=clueId\nAND status=WAITING_ACCEPT\n→ CONVERTED
+CM -> DB : UPDATE
+DB --> CM : affectedRows
+
+alt affectedRows = 0
+  S -> CM : requery clueId
+  CM -> DB : SELECT
+  DB --> CM : row / none
+  alt 不存在 / 不可见
+    S -> DB : ROLLBACK
+    S --> C : 40401 RESOURCE_NOT_FOUND
+  else 已被接取 / 状态变化
+    S -> DB : ROLLBACK
+    S --> C : 40901 BUSINESS_STATE_CONFLICT
+  end
+
+else affectedRows = 1
+  S -> TM : INSERT RescueTask\nclueId + rescuerId\nstatus=WAITING_START
+  TM -> DB : INSERT
+
+  alt 命中 uk_rescue_task_active_clue
+    DB --> TM : unique conflict
+    S -> DB : ROLLBACK
+    note right of DB
+    同一事务回滚后，
+    RescueClue 恢复 WAITING_ACCEPT。
+    end note
+    S --> C : 40901 BUSINESS_STATE_CONFLICT
+  else INSERT成功
+    DB --> TM : taskId
+    TM --> S : taskId
+
+    S -> OLM : INSERT OperationLog\nRESCUE_CLUE + ACCEPT_RESCUE\nWAITING_ACCEPT→CONVERTED
+    OLM -> DB : INSERT
+
+    break 任一数据库写入或 OperationLog 写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : TaskSummaryResponse
+    C --> App : 201 Created
+    App --> Rescuer : 接取成功
+  end
+end
+
+@enduml
+

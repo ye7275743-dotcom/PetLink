@@ -1,0 +1,216 @@
+@startuml
+title PetLink V1.0 完整用例清单图（可读布局版）
+
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 55
+
+' =====================================================
+' 参与者：访客/普通用户放左侧，救助人员/管理员放右侧
+' 这样共享用例从两边连接，显著减少交叉线
+' =====================================================
+
+actor "未登录访客\nVISITOR" as Visitor
+actor "普通用户\nUSER" as User
+actor "救助人员\nRESCUER" as Rescuer
+actor "系统管理员\nADMIN" as Admin
+
+Visitor -[hidden]down-> User
+Rescuer -[hidden]down-> Admin
+
+rectangle "PetLink 流浪动物救助与领养服务平台" {
+
+    package "用户与认证" {
+        usecase "注册" as F_Register
+        usecase "登录" as F_Login
+        usecase "维护个人资料" as F_Profile
+    }
+
+    package "动物浏览与收藏" {
+        usecase "浏览动物" as F_BrowseAnimal
+        usecase "筛选动物" as F_FilterAnimal
+        usecase "查看动物详情" as F_AnimalDetail
+        usecase "收藏动物" as F_Favorite
+        usecase "取消收藏" as F_Unfavorite
+        usecase "查看本人收藏列表" as F_ViewFavorites
+    }
+
+    package "救助线索管理" {
+        usecase "发布救助线索\nUC-01" as F_PublishClue
+        usecase "查看本人救助线索" as F_ViewOwnClue
+        usecase "修改待审核线索" as F_EditClue
+        usecase "撤回待审核线索" as F_WithdrawClue
+        usecase "审核救助线索\nUC-02" as F_AuditClue
+    }
+
+    package "救助任务管理" {
+        usecase "查看待接取线索" as F_ViewWaiting
+        usecase "接取救助任务\nUC-03" as F_AcceptTask
+        usecase "更新并完成救助任务\nUC-04" as F_UpdateTask
+        usecase "填写救助记录" as F_RescueRecord
+        usecase "查看 / 管理救助任务" as F_ManageTask
+        usecase "处理异常任务" as F_HandleAbnormal
+    }
+
+    package "动物档案管理" {
+        usecase "创建动物档案" as F_CreateAnimal
+        usecase "维护动物档案" as F_EditAnimal
+        usecase "添加健康记录" as F_AddHealth
+        usecase "查看健康记录" as F_ViewHealth
+        usecase "管理动物图片" as F_ManageAnimalImage
+    }
+
+    package "领养管理" {
+        usecase "提交领养申请\nUC-05" as F_ApplyAdoption
+        usecase "撤回本人待审核申请" as F_WithdrawApplication
+        usecase "查看本人领养申请及状态" as F_ViewApplication
+        usecase "审核领养申请\nUC-06" as F_AuditAdoption
+        usecase "查看本人领养记录" as F_ViewOwnAdoption
+        usecase "管理领养记录" as F_ManageAdoption
+        usecase "查看负责动物的\n领养情况" as F_ViewResponsibleAdoption
+    }
+
+    package "领养回访" {
+        usecase "提交领养回访\nUC-07" as F_SubmitFollowUp
+        usecase "查看本人回访" as F_ViewOwnFollowUp
+        usecase "查看负责动物的回访" as F_ViewResponsibleFollowUp
+        usecase "查看全部回访" as F_AdminFollowUp
+    }
+
+    package "公告与后台管理" {
+        usecase "查看公告" as F_ViewNotice
+        usecase "公告管理" as F_ManageNotice
+        usecase "用户管理" as F_UserManage
+        usecase "救助人员管理" as F_RescuerManage
+        usecase "数据统计" as F_Statistics
+    }
+
+    ' 强制模块大体纵向排列，避免 PlantUML 自动把所有包横向铺开
+    F_Register -[hidden]down-> F_BrowseAnimal
+    F_BrowseAnimal -[hidden]down-> F_PublishClue
+    F_PublishClue -[hidden]down-> F_ViewWaiting
+    F_ViewWaiting -[hidden]down-> F_CreateAnimal
+    F_CreateAnimal -[hidden]down-> F_ApplyAdoption
+    F_ApplyAdoption -[hidden]down-> F_SubmitFollowUp
+    F_SubmitFollowUp -[hidden]down-> F_ViewNotice
+}
+
+' =====================================================
+' 左侧：VISITOR
+' =====================================================
+
+Visitor -right- F_Register
+Visitor -right- F_BrowseAnimal
+Visitor -right- F_FilterAnimal
+Visitor -right- F_AnimalDetail
+Visitor -right- F_ViewNotice
+
+' =====================================================
+' 左侧：USER
+' =====================================================
+
+User -right- F_Login
+User -right- F_Profile
+
+User -right- F_BrowseAnimal
+User -right- F_FilterAnimal
+User -right- F_AnimalDetail
+User -right- F_Favorite
+User -right- F_Unfavorite
+User -right- F_ViewFavorites
+
+User -right- F_PublishClue
+User -right- F_ViewOwnClue
+User -right- F_EditClue
+User -right- F_WithdrawClue
+
+User -right- F_ApplyAdoption
+User -right- F_WithdrawApplication
+User -right- F_ViewApplication
+User -right- F_ViewOwnAdoption
+
+User -right- F_SubmitFollowUp
+User -right- F_ViewOwnFollowUp
+
+User -right- F_ViewNotice
+
+' =====================================================
+' 右侧：RESCUER
+' =====================================================
+
+F_Login -right- Rescuer
+F_Profile -right- Rescuer
+
+F_BrowseAnimal -right- Rescuer
+F_FilterAnimal -right- Rescuer
+F_AnimalDetail -right- Rescuer
+F_Favorite -right- Rescuer
+F_Unfavorite -right- Rescuer
+F_ViewFavorites -right- Rescuer
+
+F_PublishClue -right- Rescuer
+F_ViewOwnClue -right- Rescuer
+F_EditClue -right- Rescuer
+F_WithdrawClue -right- Rescuer
+
+F_ViewWaiting -right- Rescuer
+F_AcceptTask -right- Rescuer
+F_UpdateTask -right- Rescuer
+F_RescueRecord -right- Rescuer
+
+F_CreateAnimal -right- Rescuer
+F_EditAnimal -right- Rescuer
+F_AddHealth -right- Rescuer
+F_ViewHealth -right- Rescuer
+F_ManageAnimalImage -right- Rescuer
+
+F_ApplyAdoption -right- Rescuer
+F_WithdrawApplication -right- Rescuer
+F_ViewApplication -right- Rescuer
+F_ViewOwnAdoption -right- Rescuer
+F_ViewResponsibleAdoption -right- Rescuer
+
+F_SubmitFollowUp -right- Rescuer
+F_ViewOwnFollowUp -right- Rescuer
+F_ViewResponsibleFollowUp -right- Rescuer
+
+F_ViewNotice -right- Rescuer
+
+' =====================================================
+' 右侧：ADMIN
+' =====================================================
+
+F_Login -right- Admin
+F_Profile -right- Admin
+
+F_BrowseAnimal -right- Admin
+F_FilterAnimal -right- Admin
+F_AnimalDetail -right- Admin
+
+F_AuditClue -right- Admin
+
+F_ManageTask -right- Admin
+F_HandleAbnormal -right- Admin
+
+F_CreateAnimal -right- Admin
+F_EditAnimal -right- Admin
+F_AddHealth -right- Admin
+F_ViewHealth -right- Admin
+F_ManageAnimalImage -right- Admin
+
+F_AuditAdoption -right- Admin
+F_ManageAdoption -right- Admin
+
+F_AdminFollowUp -right- Admin
+
+F_ViewNotice -right- Admin
+F_ManageNotice -right- Admin
+F_UserManage -right- Admin
+F_RescuerManage -right- Admin
+F_Statistics -right- Admin
+
+@enduml

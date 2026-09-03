@@ -1,0 +1,108 @@
+@startuml
+title PetLink 应用层类图（b-2）M07～M08 V1.0
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype polyline
+skinparam nodesep 28
+skinparam ranksep 34
+skinparam packageStyle rectangle
+top to bottom direction
+
+package "M07 收藏与公告" as M07 {
+  class FavoriteController
+  class FavoriteService {
+    +favorite()
+    +unfavorite()
+    +getMyFavorites()
+  }
+  interface FavoriteMapper
+
+  class AnnouncementController
+  class AnnouncementService {
+    +createDraft()
+    +update()
+    +publish()
+    +withdraw()
+  }
+  interface AnnouncementMapper
+
+  FavoriteController --> FavoriteService
+  FavoriteService --> FavoriteMapper
+
+  AnnouncementController --> AnnouncementService
+  AnnouncementService --> AnnouncementMapper
+
+  FavoriteService -[hidden]right-> AnnouncementService
+}
+
+package "M08 后台管理与统计" as M08 {
+  class AdminController
+  class AdminService {
+    +getUsers()
+    +enableUser()
+    +disableUser()
+    +promoteRescuer()
+  }
+
+  class StatsService {
+    +overview()
+    +trends()
+  }
+
+  AdminController --> AdminService
+  AdminController --> StatsService
+}
+
+package "共享持久层" as SHARED {
+  interface UserMapper
+  interface RescueClueMapper
+  interface RescueTaskMapper
+  interface AnimalMapper
+  interface AdoptionApplicationMapper
+  interface AdoptionRecordMapper
+  interface FollowUpRecordMapper
+  interface OperationLogMapper
+
+  UserMapper -[hidden]right-> RescueClueMapper
+  RescueClueMapper -[hidden]right-> RescueTaskMapper
+  RescueTaskMapper -[hidden]right-> AnimalMapper
+  AnimalMapper -[hidden]right-> AdoptionApplicationMapper
+  AdoptionApplicationMapper -[hidden]right-> AdoptionRecordMapper
+  AdoptionRecordMapper -[hidden]right-> FollowUpRecordMapper
+  FollowUpRecordMapper -[hidden]right-> OperationLogMapper
+}
+
+M07 -[hidden]right-> M08
+M07 -[hidden]down-> SHARED
+M08 -[hidden]down-> SHARED
+
+' M07 dependencies.
+FavoriteService --> AnimalMapper
+AnnouncementService --> OperationLogMapper
+
+' M08 dependencies.
+AdminService --> UserMapper
+AdminService --> OperationLogMapper
+
+StatsService --> UserMapper
+StatsService --> RescueClueMapper
+StatsService --> RescueTaskMapper
+StatsService --> AnimalMapper
+StatsService --> AdoptionApplicationMapper
+StatsService --> AdoptionRecordMapper
+StatsService --> FollowUpRecordMapper
+
+note bottom of OperationLogMapper
+仅提供 insert / select；
+业务层不提供 update / delete。
+end note
+
+note bottom of StatsService
+覆盖用户、线索、任务、动物、
+领养申请、领养记录、回访统计，
+以及救助 / 领养时间趋势。
+end note
+
+@enduml
+

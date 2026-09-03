@@ -1,0 +1,142 @@
+@startuml
+title PetLink 救助业务主流程活动图
+
+skinparam shadowing false
+
+|发布人 USER / RESCUER|
+start
+:填写救助线索信息;
+:上传现场图片;
+:提交救助线索;
+
+|系统|
+:校验身份、业务字段和图片;
+:创建 RescueClue;
+:status = PENDING_REVIEW;
+
+|ADMIN|
+:审核救助线索;
+
+if (审核通过？) then (是)
+
+  |系统|
+  :记录审核人和审核时间;
+  :RescueClue\nPENDING_REVIEW → WAITING_ACCEPT;
+
+else (否)
+
+  |ADMIN|
+  :填写驳回原因;
+
+  |系统|
+  :记录审核信息;
+  :RescueClue\nPENDING_REVIEW → REJECTED;
+  stop
+
+endif
+
+repeat
+
+  |RESCUER|
+  :选择 WAITING_ACCEPT 线索;
+  :发起接取;
+
+  |系统|
+  :条件更新 RescueClue\nWAITING_ACCEPT → CONVERTED;
+
+  if (条件更新成功？) then (是)
+
+    :创建 RescueTask\nstatus = WAITING_START;
+
+  else (否)
+
+    :不创建 RescueTask;
+    :返回“线索已被其他救助人员接取”;
+    stop
+
+  endif
+
+  |RESCUER|
+  :发起开始救助;
+
+  |系统|
+  :RescueTask\nWAITING_START → IN_PROGRESS;
+
+  while (需要添加救助记录？) is (是)
+
+    |RESCUER|
+    :填写救助过程记录;
+
+    |系统|
+    :锁定并校验任务负责人和状态;
+    :新增 RescueRecord;
+
+  endwhile (否)
+
+  |RESCUER|
+  :提交救助结果;
+
+  if (救助成功？) then (是)
+
+    :填写至少一个动物档案;
+    :上传动物图片\n并可填写初始健康记录;
+
+    |系统|
+    :BEGIN 救助完成事务;
+    :校验任务仍为 IN_PROGRESS\n且当前用户为负责人;
+    :RescueTask\nIN_PROGRESS → SUCCESS;
+    :创建 Animal >= 1\n初始状态 = TREATING;
+    :创建 AnimalImage /\n初始 HealthRecord（如有）;
+    :RescueClue\nCONVERTED → CLOSED;
+    :写入关键操作日志;
+    :COMMIT;
+
+    note right
+    上述救助完成步骤属于同一数据库事务，
+    任一步失败均整体回滚。
+    end note
+
+    break
+
+  else (否)
+
+    |RESCUER|
+    :填写失败原因;
+
+    |系统|
+    :RescueTask\nIN_PROGRESS → FAILED;
+    :RescueClue 保持 CONVERTED;
+    :记录失败操作日志;
+
+    |ADMIN|
+    :处理 FAILED 救助任务;
+
+    if (决定重新开放线索？) then (是)
+
+      |系统|
+      :RescueClue\nCONVERTED → WAITING_ACCEPT;
+
+    else (关闭)
+
+      |系统|
+      :RescueClue\nCONVERTED → CLOSED;
+      stop
+
+    endif
+
+  endif
+
+repeat while (线索重新开放？) is (是)
+
+|系统|
+:动物进入后续档案维护流程;
+
+|RESCUER / ADMIN|
+:维护动物健康及领养状态;
+:TREATING → OBSERVING → AVAILABLE;
+
+|系统|
+:动物进入待领养阶段;
+
+stop
+@enduml

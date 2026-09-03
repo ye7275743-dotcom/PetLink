@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PetLink PC 救助中心工作台 V2.1</title>
+<style>
+:root{
+  --paper:#f3f0e8; --paper-deep:#e7e1d3; --panel:#fffdf8; --ink:#173d39;
+  --ink-2:#315650; --muted:#6f7d77; --line:#d5d0c3; --orange:#e85f3e;
+  --yellow:#f2c94c; --moss:#6f8f6b; --sky:#8eb6b0; --danger:#b33b2e;
+  --shadow:0 16px 40px rgba(23,61,57,.09); --shadow-sm:0 5px 16px rgba(23,61,57,.07);
+  --display:Georgia,"Songti SC","STSong",serif;
+  --body:"Aptos","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;font-family:var(--body);background:
+  radial-gradient(circle at 14% 8%,rgba(232,95,62,.055),transparent 28%),
+  radial-gradient(circle at 88% 72%,rgba(23,61,57,.055),transparent 25%),
+  linear-gradient(110deg,rgba(255,255,255,.26),transparent 48%),var(--paper);color:var(--ink);font-size:14px;letter-spacing:.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(232,95,62,.25);outline-offset:2px}
+.app{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:100vh}
+aside{background:var(--ink);color:#f8f3e8;padding:30px 20px 22px;position:sticky;top:0;height:100vh;overflow:hidden}
+aside::before{content:"";position:absolute;right:-46px;top:78px;width:116px;height:116px;border:2px solid rgba(242,201,76,.5);border-radius:50%}
+aside::after{content:"";position:absolute;left:38px;top:153px;bottom:42px;width:1px;background:linear-gradient(var(--yellow),rgba(242,201,76,0));opacity:.58;pointer-events:none}
+.brand{position:relative;font-family:var(--display);font-size:31px;font-weight:700;line-height:.95;letter-spacing:-.04em;padding:0 13px 26px 42px}
+.brand::before{content:"↗";position:absolute;left:4px;top:-4px;width:28px;height:28px;border:1px solid rgba(242,201,76,.8);border-radius:50%;display:grid;place-items:center;color:var(--yellow);font-family:var(--mono);font-size:16px}
+.brand small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#b9c9c5;font-weight:500;margin-top:10px}
+.role{position:relative;background:rgba(255,253,248,.07);border:1px solid rgba(255,253,248,.14);border-radius:3px;padding:12px 13px 12px 35px;margin:0 0 20px;font-size:12px;line-height:1.7;color:#cfdbd8}
+.role::before{content:"";position:absolute;left:14px;top:18px;width:8px;height:8px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 4px rgba(242,201,76,.13)}
+.role b{color:#fff4c9;font-family:var(--mono);font-size:11px}
+nav{position:relative;z-index:1}
+nav button{width:100%;border:0;background:transparent;color:#c7d5d1;text-align:left;padding:11px 12px 11px 42px;border-radius:3px;cursor:pointer;margin:3px 0;font-size:13px;position:relative;transition:background .18s ease,color .18s ease,transform .18s ease}
+nav button::before{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:11px;color:#83a49d}
+nav button:nth-child(1)::before{content:"⌁"}nav button:nth-child(2)::before{content:"⌖"}nav button:nth-child(3)::before{content:"↗"}nav button:nth-child(4)::before{content:"◇"}nav button:nth-child(5)::before{content:"♡"}nav button:nth-child(6)::before{content:"□"}nav button:nth-child(7)::before{content:"↺"}nav button:nth-child(8)::before{content:"◫"}nav button:nth-child(9)::before{content:"◎"}
+nav button:hover{background:rgba(255,253,248,.08);color:#fff;transform:translateX(2px)}
+nav button.active{background:var(--yellow);color:var(--ink);font-weight:700;box-shadow:7px 7px 0 rgba(0,0,0,.12)}
+nav button.active::before{color:var(--ink)}
+main{padding:38px clamp(24px,4vw,58px) 56px;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:25px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+h1{font-family:var(--display);font-size:clamp(29px,3vw,44px);line-height:1;margin:0;letter-spacing:-.045em;font-weight:700}
+.sub{color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:9px;letter-spacing:.04em}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:9px 13px;cursor:pointer;box-shadow:2px 2px 0 var(--paper-deep);transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--paper-deep);background:#fff}
+.btn:active{transform:translate(1px,1px);box-shadow:0 0 0 transparent}
+.btn.primary{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:3px 3px 0 #a93f29}
+.btn.primary:hover{background:#d94e30}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.grid>.card{min-height:132px;position:relative;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.grid>.card::after{content:"";position:absolute;width:48px;height:48px;border:1px solid var(--line);border-radius:50%;right:-16px;top:-16px}
+.grid>.card:nth-child(1){border-top:5px solid var(--orange)}.grid>.card:nth-child(2){border-top:5px solid var(--yellow)}.grid>.card:nth-child(3){border-top:5px solid var(--moss)}.grid>.card:nth-child(4){border-top:5px solid var(--sky)}
+.card{background:rgba(255,253,248,.96);border:1px solid var(--line);border-radius:5px;padding:17px;box-shadow:var(--shadow-sm)}
+.metric{font-family:var(--display);font-size:42px;font-weight:700;line-height:1;margin-top:14px;letter-spacing:-.05em}
+.label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.section{display:none}.section.active{display:block;animation:sectionIn .32s ease both}
+@keyframes sectionIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:5px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.table th,.table td{padding:13px 12px;border-bottom:1px solid #e7e2d7;font-size:12px;text-align:left}
+.table tr:last-child td{border-bottom:0}.table tbody tr:hover td,.table tr:hover td{background:#faf5e9}
+.table th{background:var(--ink);color:#edf3f0;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:500}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid rgba(23,61,57,.18);border-radius:999px;background:#edf3e9;color:var(--ink-2);font-family:var(--mono);font-size:10px;font-weight:700}
+.badge::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--moss)}
+.toolbar{display:flex;gap:8px;margin:15px 0}.input,.select{padding:10px 11px;border:1px solid var(--line);border-radius:3px;background:var(--panel)}
+.input:focus,.select:focus,textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(232,95,62,.1)}
+.two{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.formrow{display:grid;grid-template-columns:120px 1fr;gap:12px;margin:11px 0;align-items:start}
+.formrow label,label{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--muted);padding-top:3px}
+textarea{min-height:92px;resize:vertical}.input,textarea,.select{width:100%}
+textarea{border:1px solid var(--line);border-radius:3px;background:#fffdf8;padding:10px 11px}
+.panel-title{font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:12px;letter-spacing:-.02em}
+.notice{padding:11px 13px;background:#f8f1da;border-left:4px solid var(--yellow);color:#5d5c4d;font-size:12px;line-height:1.65}
+.photo-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.photo{height:92px;border-radius:4px;background:var(--paper-deep);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:34px;position:relative;overflow:hidden}
+.photo::after{content:"FIELD";position:absolute;right:5px;bottom:4px;font:8px var(--mono);letter-spacing:.12em;color:rgba(23,61,57,.45)}
+.animal-summary{display:flex;gap:12px;align-items:center;background:#f7f3e9;border:1px solid var(--line);border-radius:4px;padding:11px}
+.animal-avatar{width:66px;height:66px;border-radius:50% 50% 45% 55%;background:var(--yellow);border:1px solid #d5ae31;display:flex;align-items:center;justify-content:center;font-size:31px;transform:rotate(-3deg)}
+.state-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.state-group{background:#f8f5ec;border:1px solid var(--line);border-radius:3px;padding:13px}
+.state-group h4{margin:0 0 9px;font:700 12px var(--mono);color:var(--ink)}
+.state-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;padding:6px 0;border-bottom:1px dashed #d8d0bf}.state-row:last-child{border-bottom:0}.state-row b{color:var(--orange)}
+.modal-mask{position:fixed;inset:0;background:rgba(9,35,32,.66);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:50;padding:22px}
+.modal{width:min(680px,92vw);max-height:84vh;overflow:auto;background:var(--panel);border-radius:5px;padding:22px;border:1px solid var(--line);box-shadow:14px 14px 0 rgba(9,35,32,.28);animation:modalIn .2s ease both}
+@keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.toast{position:fixed;right:28px;bottom:28px;background:var(--ink);color:#fff8e7;padding:12px 16px;border-radius:3px;display:none;z-index:60;font-size:12px;border-left:5px solid var(--yellow);box-shadow:var(--shadow)}
+.trend-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.trend-controls input{width:auto;min-width:145px}
+.bar{width:10%;background:var(--sky)!important;border-radius:3px 3px 0 0;transition:height .35s cubic-bezier(.2,.8,.2,1);box-shadow:inset 0 -8px rgba(23,61,57,.08)}
+.bar:nth-child(even){background:var(--orange)!important}.file-help{font-size:11px;color:var(--muted);margin:6px 0 9px;line-height:1.55}
+.eyebrow{display:block;margin-bottom:8px;color:var(--orange);font:700 10px/1 var(--mono);letter-spacing:.16em}
+.weather-panel{display:grid;grid-template-columns:auto auto;gap:3px 18px;align-items:center;min-width:250px;padding:11px 14px;background:rgba(255,253,248,.7);border:1px solid var(--line);border-radius:4px;box-shadow:3px 3px 0 var(--paper-deep)}
+.weather-panel span{grid-row:1/3;font-size:12px}.weather-panel b{font-size:14px}.weather-panel i{font:10px var(--mono);color:var(--muted);font-style:normal}
+.metric-card{padding:16px 17px 13px 76px!important;min-height:150px!important}
+.metric-icon{position:absolute;left:17px;top:17px;width:43px;height:43px;display:grid;place-items:center;border-radius:4px;background:var(--orange);color:#fff;font:700 22px var(--display);box-shadow:3px 3px 0 #f2c8b9}
+.metric-icon.dark{background:var(--ink);box-shadow:3px 3px 0 #b8c6c1}.metric-icon.coral{background:#c97b5d}.metric-icon.green{background:var(--moss)}
+.metric-card .metric{font-size:39px;margin:7px 0 13px}.metric-card .label{color:var(--ink);font-weight:700}
+.metric-foot{margin-left:-59px;padding-top:11px;border-top:1px solid #e5dfd3;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
+.metric-foot b{color:var(--orange)}.metric-foot span{margin-left:auto;color:var(--ink);font-weight:700}
+.workbench-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
+.work-list-panel{padding:20px}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:10px}.panel-head .panel-title{font-size:22px;margin:0}
+.text-btn{border:0;background:transparent;color:var(--ink);padding:4px 0;cursor:pointer;font-size:11px;border-bottom:1px solid var(--ink)}
+.text-btn:hover{color:var(--orange);border-color:var(--orange)}
+.rescue-list-item,.task-list-item{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #e7e1d5}
+.rescue-list-item:last-child,.task-list-item:last-child{border-bottom:0}
+.rescue-list-item img,.task-list-item img{width:58px;height:58px;object-fit:cover;border-radius:4px;filter:saturate(.9)}
+.rescue-list-item b,.task-list-item b{display:block;font-family:var(--display);font-size:15px}.rescue-list-item span,.task-list-item span{display:block;margin-top:5px;color:var(--muted);font:10px var(--mono)}
+.rescue-list-item em,.task-list-item em{align-self:start;padding:4px 7px;background:#fff0e9;color:var(--orange);font:700 9px var(--mono);font-style:normal;border-radius:3px}.rescue-list-item em.medium,.task-list-item em.medium{background:#edf2e9;color:#4f715f}
+.dashboard-lower{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.45fr);gap:14px;margin-top:14px}.trend-card{min-height:330px;padding:20px}.trend-card .panel-head{align-items:center}.trend-controls{justify-content:flex-end}.trend-controls .input{min-width:128px;padding:7px 8px;font-size:10px}.trend-controls .btn{padding:7px 9px;font-size:10px}
+.chart-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:12px 0 14px}.chart-stats>div{padding:10px;border:1px solid #e4ded1;background:#faf7ef}.chart-stats span{display:block;color:var(--muted);font:9px var(--mono)}.chart-stats b{display:block;margin:5px 0 3px;font:700 25px var(--display)}.chart-stats i{font-style:normal;color:var(--orange);font-size:9px}
+.line-chart{height:168px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(to right,transparent 24.8%,rgba(23,61,57,.04) 25%,transparent 25.2%,transparent 49.8%,rgba(23,61,57,.04) 50%,transparent 50.2%,transparent 74.8%,rgba(23,61,57,.04) 75%,transparent 75.2%)}.line-chart svg{display:block;width:100%;height:100%;overflow:visible}.grid-line{fill:none;stroke:#ded8cc;stroke-width:1;stroke-dasharray:4 5}.chart-area{fill:rgba(232,95,62,.09)}.chart-line{fill:none;stroke:var(--orange);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 1px rgba(232,95,62,.18))}
+.announcement-panel{padding:20px}.announcement-panel ul{list-style:none;margin:6px 0 0;padding:0}.announcement-panel li{display:grid;grid-template-columns:8px 1fr auto;gap:8px;align-items:start;padding:12px 0;border-bottom:1px solid #e6e0d4;font-size:11px;line-height:1.45}.announcement-panel li:last-child{border-bottom:0}.announcement-panel li>i{width:5px;height:5px;margin-top:5px;border-radius:50%;background:var(--orange)}.announcement-panel li span b{margin-left:5px;color:var(--orange);font:8px var(--mono)}.announcement-panel time{color:var(--muted);font:9px var(--mono)}
+.animal-cell{display:flex;align-items:center;gap:10px;min-width:150px}.animal-cell img{width:52px;height:52px;object-fit:cover;border-radius:4px}.animal-cell b{display:block;font-family:var(--display);font-size:15px}.animal-cell small{display:block;margin-top:4px;color:var(--muted);font:9px var(--mono)}
+.animal-summary img{width:82px;height:82px;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
+.statusline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.divider{height:1px;background:var(--line);margin:18px 0}.modal-animal-hero{width:100%;height:220px;object-fit:cover;border-radius:4px;margin-bottom:15px}
+.suspend-form{width:100%;padding:12px;background:#fff7ec;border:1px solid #e7c9af;border-radius:4px}.suspend-form .input{margin:7px 0 9px}
+.photo img{width:100%;height:100%;object-fit:cover}.photo:has(img)::after{content:"RESCUE FILE";color:#fff;text-shadow:0 1px 3px #000}
+@media(max-width:1200px){.grid{grid-template-columns:repeat(2,1fr)}.state-grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.dashboard-lower{grid-template-columns:1fr}.announcement-panel ul{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}}
+@media(max-width:980px){.workbench-grid{grid-template-columns:1fr}.trend-card .panel-head{align-items:flex-start;flex-direction:column}.trend-controls{justify-content:flex-start}}
+@media(max-width:880px){.app{grid-template-columns:1fr}aside{height:auto;position:relative;padding:18px}.brand{padding-bottom:15px}aside::after{display:none}nav{display:flex;overflow:auto;gap:5px;padding-bottom:4px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}nav button{flex:0 0 auto;width:auto;padding:9px 12px 9px 35px}.role{display:none}main{padding:24px 18px}.topbar{align-items:flex-start;flex-direction:column}.weather-panel{width:100%}.grid,.state-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.grid,.state-grid,.chart-stats{grid-template-columns:1fr}.toolbar,.trend-controls{align-items:stretch;flex-direction:column}.trend-controls input{width:100%}.formrow{grid-template-columns:1fr}.table{display:block;overflow-x:auto}.announcement-panel ul{display:block}.rescue-list-item,.task-list-item{grid-template-columns:52px minmax(0,1fr)}.rescue-list-item em,.task-list-item em{grid-column:2}.metric-card{padding-left:70px!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand">PetLink<small>Rescue center workbench · V2.1</small></div>
+  <div class="role">当前角色：<b>ADMIN</b><br/>不同角色登录后仅显示其被授权的管理入口</div>
+  <nav id="nav">
+    <button data-target="dashboard" class="active">总览看板</button>
+    <button data-target="clues">线索审核</button>
+    <button data-target="tasks">救助任务</button>
+    <button data-target="animals">动物档案</button>
+    <button data-target="adoptions">领养审核</button><button data-target="adoptionRecords">领养记录监管</button>
+    <button data-target="followups">回访记录</button>
+    <button data-target="announcements">公告管理</button>
+    <button data-target="users">用户管理</button>
+  </nav>
+</aside>
+<main>
+  <section id="dashboard" class="section active">
+    <div class="topbar">
+      <div><span class="eyebrow">RESCUE CENTER · 08:30</span><h1>您好，林小满</h1><div class="sub">每一次救助，都是改变命运的开始。今天有 7 项工作等待处理。</div></div>
+      <div class="weather-panel"><span>上海市 · 浦东新区⌄</span><b>☁ 22°C</b><i>多云</i></div>
+    </div>
+    <div class="grid">
+      <div class="card metric-card"><span class="metric-icon">⌖</span><div class="label">待审核线索</div><div class="metric">18</div><div class="metric-foot">较昨日 <b>+6</b><span>查看全部 →</span></div></div>
+      <div class="card metric-card"><span class="metric-icon dark">↗</span><div class="label">待处理任务</div><div class="metric">7</div><div class="metric-foot">紧急 <b>2 个</b><span>查看全部 →</span></div></div>
+      <div class="card metric-card"><span class="metric-icon coral">♡</span><div class="label">待审核申请</div><div class="metric">12</div><div class="metric-foot">较昨日 <b>+3</b><span>查看全部 →</span></div></div>
+      <div class="card metric-card"><span class="metric-icon green">⌂</span><div class="label">动物档案总数</div><div class="metric">86</div><div class="metric-foot">犬 48 · 猫 32 · 其他 6<span>查看详情 →</span></div></div>
+    </div>
+    <div class="workbench-grid">
+      <div class="card work-list-panel"><div class="panel-head"><div><span class="eyebrow">RESCUE CLUES</span><div class="panel-title">等待接取线索</div></div><button class="text-btn" data-target="clues">查看全部</button></div>
+        <div class="rescue-list-item"><img src="assets/coffee-kitten.png" alt="受伤幼猫线索"/><div><b>浦东新区花木街道 · 流浪幼猫</b><span>发现于 08:27 · 11:30 · 线索编号 LS-2026-3010</span></div><em>WAITING_ACCEPT</em></div>
+        <div class="rescue-list-item"><img src="assets/ahei-black-dog.png" alt="受伤流浪犬线索"/><div><b>闵行区七宝镇 · 受伤流浪犬</b><span>发现于 08:27 · 10:18 · 线索编号 LS-2026-3007</span></div><em class="medium">WAITING_ACCEPT</em></div>
+        <div class="rescue-list-item"><img src="assets/pudding-cat-hero.png" alt="弃养猫线索"/><div><b>静安区胶州路 · 弃养猫</b><span>发现于 08:26 · 16:10 · 线索编号 LS-2026-3002</span></div><em>WAITING_ACCEPT</em></div>
+      </div>
+      <div class="card work-list-panel"><div class="panel-head"><div><span class="eyebrow">ACTIVE TASKS</span><div class="panel-title">活动救助任务</div></div><button class="text-btn" data-target="tasks">查看全部</button></div>
+        <div class="task-list-item"><img src="assets/coffee-kitten.png" alt="幼猫救助任务"/><div><b>小区流浪猫救助</b><span>⌖ 浦东新区花木街道</span><span>接取于 11:30</span></div><em>WAITING_START</em></div>
+        <div class="task-list-item"><img src="assets/pudding-cat-hero.png" alt="猫咪救助任务"/><div><b>小灰 · 伤情检查</b><span>⌖ 静安区救助站</span><span>开始于 14:00</span></div><em class="medium">IN_PROGRESS</em></div>
+        <div class="task-list-item"><img src="assets/little-orange-dog.png" alt="小橘犬救助任务"/><div><b>小橘 · 术后转运</b><span>⌖ 合作医院</span><span>开始于 09:30</span></div><em class="medium">IN_PROGRESS</em></div>
+      </div>
+    </div>
+    <div class="dashboard-lower">
+      <div class="card trend-card">
+        <div class="panel-head"><div><span class="eyebrow">LAST 30 DAYS</span><div id="trendTitle" class="panel-title">救助 / 领养趋势 · 2026-08-01 ～ 2026-08-29</div></div>
+          <div class="trend-controls"><input id="trendFrom" class="input" type="date" value="2026-08-01"/><span>至</span><input id="trendTo" class="input" type="date" value="2026-08-29"/><button class="btn" data-this-month>本月</button><button class="btn primary" data-apply-trend>应用</button><button class="btn" data-refresh-stats>刷新</button></div>
+        </div>
+        <div class="chart-stats"><div><span>线索总数</span><b>156</b><i>较上月 +12%</i></div><div><span>救助成功</span><b>64</b><i>成功率 41%</i></div><div><span>开放领养</span><b>58</b><i>较上月 +8</i></div><div><span>领养迁出</span><b>32</b><i>较上月 +6</i></div></div>
+        <div class="line-chart"><svg viewBox="0 0 700 170" preserveAspectRatio="none" aria-label="救助趋势示意图"><path class="grid-line" d="M0 30H700M0 80H700M0 130H700"/><path class="chart-area" d="M0 140 L70 115 L140 126 L210 92 L280 108 L350 62 L420 102 L490 84 L560 40 L630 70 L700 22 L700 170 L0 170 Z"/><path class="chart-line" d="M0 140 L70 115 L140 126 L210 92 L280 108 L350 62 L420 102 L490 84 L560 40 L630 70 L700 22"/></svg></div>
+      </div>
+      <div class="card announcement-panel"><div class="panel-head"><div><span class="eyebrow">NOTICE BOARD</span><div class="panel-title">公告通知</div></div><button class="text-btn" data-target="announcements">查看全部</button></div><ul><li><i></i><span>五一假期值班安排 <b>置顶</b></span><time>05-08</time></li><li><i></i><span>关于开展狂犬疫苗接种的通知</span><time>05-07</time></li><li><i></i><span>领养日活动报名开启</span><time>05-06</time></li><li><i></i><span>物资捐助通道公告（4月）</span><time>05-05</time></li></ul></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="panel-title">FR-STAT 完整状态统计</div>
+      <div class="state-grid">
+        <div class="state-group"><h4>RescueClue · 6 状态</h4><div class="state-row"><span>PENDING_REVIEW</span><b>6</b></div><div class="state-row"><span>REJECTED</span><b>12</b></div><div class="state-row"><span>WITHDRAWN</span><b>4</b></div><div class="state-row"><span>WAITING_ACCEPT</span><b>5</b></div><div class="state-row"><span>CONVERTED</span><b>3</b></div><div class="state-row"><span>CLOSED</span><b>78</b></div></div>
+        <div class="state-group"><h4>RescueTask · 5 状态</h4><div class="state-row"><span>WAITING_START</span><b>2</b></div><div class="state-row"><span>IN_PROGRESS</span><b>3</b></div><div class="state-row"><span>SUCCESS</span><b>72</b></div><div class="state-row"><span>FAILED</span><b>9</b></div><div class="state-row"><span>CANCELED</span><b>5</b></div></div>
+        <div class="state-group"><h4>Animal · 5 状态</h4><div class="state-row"><span>TREATING</span><b>5</b></div><div class="state-row"><span>OBSERVING</span><b>4</b></div><div class="state-row"><span>AVAILABLE</span><b>22</b></div><div class="state-row"><span>SUSPENDED</span><b>2</b></div><div class="state-row"><span>ADOPTED</span><b>61</b></div></div>
+        <div class="state-group"><h4>AdoptionApplication · 5 状态</h4><div class="state-row"><span>PENDING</span><b>13</b></div><div class="state-row"><span>APPROVED</span><b>61</b></div><div class="state-row"><span>REJECTED</span><b>34</b></div><div class="state-row"><span>WITHDRAWN</span><b>8</b></div><div class="state-row"><span>INVALIDATED</span><b>47</b></div></div>
+      </div>
+    </div>
+</section>
+
+  <section id="clues" class="section">
+    <div class="topbar"><div><h1>线索审核</h1><div class="sub">M02 · 默认 PENDING_REVIEW，按 created_at / id FIFO</div></div></div>
+    <div class="toolbar"><select class="select"><option>PENDING_REVIEW</option><option>WAITING_ACCEPT</option><option>REJECTED</option></select><input class="input" placeholder="地点 / 发布人"/></div>
+    <div class="two">
+      <table class="table"><tr><th>ID</th><th>地点</th><th>状态</th><th>发布时间</th></tr>
+        <tr><td>3001</td><td>上海市浦东新区某路口</td><td><span class="badge">PENDING_REVIEW</span></td><td>10:05</td></tr>
+        <tr><td>3002</td><td>上海市静安区某公园</td><td><span class="badge">PENDING_REVIEW</span></td><td>10:18</td></tr>
+      </table>
+      <div class="card"><div class="panel-title">线索 #3001</div>
+        <div class="formrow"><label>发现时间</label><div>2026-08-29 09:48</div></div>
+        <div class="formrow"><label>动物描述</label><div>一只受伤橘猫，后腿疑似外伤</div></div>
+        <div class="formrow"><label>现场情况</label><div>靠近绿化带，行动缓慢</div></div>
+        <div class="formrow"><label>联系方式</label><div>138****8000</div></div>
+        <div class="formrow" style="align-items:start"><label>现场图片</label><div class="photo-strip"><div class="photo"><img src="assets/coffee-kitten.png" alt="线索现场幼猫"/></div><div class="photo"><img src="assets/coffee-kitten.png" alt="线索现场环境"/></div><div class="photo"><img src="assets/coffee-kitten.png" alt="动物伤情记录"/></div></div></div>
+        <div class="formrow"><label>审核意见</label><textarea id="clueRejectReason" placeholder="驳回时必填"></textarea></div>
+        <div class="actions"><button class="btn" data-clue-reject>驳回</button><button class="btn primary" data-toast="线索审核通过，状态变为 WAITING_ACCEPT（示意）">审核通过</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tasks" class="section">
+    <div class="topbar"><div><h1>救助任务</h1><div class="sub">M03 · ADMIN 监管 / RESCUER 自己任务</div></div></div>
+    <div class="toolbar"><select class="select"><option>全部状态</option><option>WAITING_START</option><option>IN_PROGRESS</option><option>FAILED</option></select></div>
+    <table class="table"><tr><th>任务</th><th>线索</th><th>救助人员</th><th>状态</th><th>操作</th></tr>
+      <tr><td>4001</td><td>3001</td><td>救助员A</td><td><span class="badge">IN_PROGRESS</span></td><td><button class="btn" data-modal="taskDetail">详情</button><button class="btn" data-modal="cancelTask">取消异常任务</button></td></tr>
+      <tr><td>4002</td><td>3005</td><td>救助员B</td><td><span class="badge">FAILED</span></td><td><button class="btn" data-modal="resolveFailed">REOPEN / CLOSE</button></td></tr>
+      <tr><td>4003</td><td>3007</td><td>救助员C</td><td><span class="badge">WAITING_START</span></td><td><button class="btn" data-modal="taskDetail">详情</button></td></tr>
+    </table>
+  </section>
+
+  <section id="animals" class="section">
+    <div class="topbar"><div><h1>动物档案</h1><div class="sub">M04 · 维护基本信息、图片、健康记录、领养状态</div></div></div>
+    <div class="toolbar"><select class="select"><option>全部状态</option><option>TREATING</option><option>OBSERVING</option><option>AVAILABLE</option><option>SUSPENDED</option><option>ADOPTED</option></select></div>
+    <table class="table"><tr><th>ID</th><th>动物档案</th><th>物种</th><th>健康摘要</th><th>状态</th><th>操作</th></tr>
+      <tr><td>5001</td><td><div class="animal-cell"><img src="assets/pudding-cat-hero.png" alt="布丁档案照"/><div><b>布丁</b><small>PET-2026-005001</small></div></div></td><td>CAT</td><td>体检正常，已驱虫</td><td><span class="badge">AVAILABLE</span></td><td><button class="btn" data-modal="animalManage" data-animal-name="布丁" data-animal-id="5001" data-animal-status="AVAILABLE">档案详情</button></td></tr>
+      <tr><td>5002</td><td><div class="animal-cell"><img src="assets/ahei-black-dog.png" alt="小黑档案照"/><div><b>小黑</b><small>PET-2026-005002</small></div></div></td><td>DOG</td><td>术后恢复观察中</td><td><span class="badge">OBSERVING</span></td><td><button class="btn" data-modal="animalManage" data-animal-name="小黑" data-animal-id="5002" data-animal-status="OBSERVING">档案详情</button></td></tr>
+      <tr><td>5003</td><td><div class="animal-cell"><img src="assets/little-orange-dog.png" alt="小橘档案照"/><div><b>小橘</b><small>PET-2026-005003</small></div></div></td><td>DOG</td><td>疫苗 1 针，精神良好</td><td><span class="badge">TREATING</span></td><td><button class="btn" data-modal="animalManage" data-animal-name="小橘" data-animal-id="5003" data-animal-status="TREATING">档案详情</button></td></tr>
+    </table>
+  </section>
+
+  <section id="adoptions" class="section">
+    <div class="topbar"><div><h1>领养审核</h1><div class="sub">M05 · ADMIN 独立审核；批准后创建 AdoptionRecord 并将 Animal 置为 ADOPTED</div></div></div>
+    <div class="two">
+      <table class="table"><tr><th>申请</th><th>动物</th><th>申请人</th><th>状态</th></tr>
+        <tr><td>6001</td><td>布丁 #5001</td><td>用户A</td><td><span class="badge">PENDING</span></td></tr>
+      </table>
+      <div class="card"><div class="panel-title">申请 #6001</div>
+        <div class="animal-summary"><img src="assets/pudding-cat-hero.png" alt="布丁动物档案"/><div><b>目标动物：布丁</b><div class="sub">CAT · FEMALE · 约8个月 · 当前 AVAILABLE</div><div class="sub">健康摘要：已绝育 · 体检正常 · 已驱虫 · 疫苗 2 针</div></div></div>
+        <p><b>领养理由：</b>希望长期照顾，并能承担医疗与生活费用。</p>
+        <p><b>住房条件：</b>自有住房，可养宠。</p>
+        <p><b>家庭情况：</b>3 人，家人均同意。</p>
+        <p><b>养宠经验：</b>曾养猫 5 年，有日常护理经验。</p>
+        <p><b>联系方式：</b>138****8000</p>
+        <div class="formrow"><label>驳回原因</label><textarea id="adoptionRejectReason" placeholder="REJECT 时必填"></textarea></div>
+        <div class="actions"><button class="btn" data-adoption-reject>拒绝</button><button class="btn primary" data-toast="领养申请已批准，已生成 AdoptionRecord（示意）">批准</button></div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section id="adoptionRecords" class="section">
+    <div class="topbar"><div><h1>领养记录监管</h1><div class="sub">M08 · AdoptionRecord 只读监管</div></div></div>
+    <div class="toolbar"><input class="input" placeholder="userId / animalId / applicationId"/></div>
+    <table class="table"><tr><th>记录ID</th><th>申请ID</th><th>动物</th><th>领养人</th><th>领养时间</th><th>操作</th></tr>
+      <tr><td>7001</td><td>5901</td><td>豆包 #4991</td><td>用户A #1001</td><td>2026-08-20 15:00</td><td><button class="btn" data-modal="adoptionRecord" data-record-id="7001" data-application-id="5901" data-record-animal="豆包 #4991" data-record-user="用户A #1001" data-adopted-at="2026-08-20 15:00">详情</button></td></tr>
+      <tr><td>6998</td><td>5990</td><td>雪球 #4988</td><td>用户B #1028</td><td>2026-08-18 11:20</td><td><button class="btn" data-modal="adoptionRecord" data-record-id="6998" data-application-id="5990" data-record-animal="雪球 #4988" data-record-user="用户B #1028" data-adopted-at="2026-08-18 11:20">详情</button></td></tr>
+    </table>
+  </section>
+
+  <section id="followups" class="section">
+    <div class="topbar"><div><h1>回访记录</h1><div class="sub">M06 · ADMIN 查看全部；RESCUER 查看负责动物回访</div></div></div>
+    <table class="table"><tr><th>回访ID</th><th>领养记录</th><th>动物</th><th>提交人</th><th>内容</th><th>时间</th></tr>
+      <tr><td>8001</td><td>7001</td><td>豆包</td><td>用户A</td><td>最近适应得很好，食欲正常。</td><td>16:00</td></tr>
+    </table>
+  </section>
+
+  <section id="announcements" class="section">
+    <div class="topbar"><div><h1>公告管理</h1><div class="sub">M07 · DRAFT → PUBLISHED → WITHDRAWN</div></div><button class="btn primary" data-modal="announcementEdit">新建草稿</button></div>
+    <table class="table"><tr><th>ID</th><th>标题</th><th>状态</th><th>版本</th><th>操作</th></tr>
+      <tr><td>10001</td><td>周末流浪动物义诊活动</td><td><span class="badge">PUBLISHED</span></td><td>1</td><td><button class="btn" data-modal="announcementEdit">编辑</button><button class="btn" data-modal="announcementWithdraw">撤回</button></td></tr>
+      <tr><td>10002</td><td>志愿者招募</td><td><span class="badge">DRAFT</span></td><td>0</td><td><button class="btn" data-modal="announcementEdit">编辑</button><button class="btn primary" data-toast="公告已发布（示意）">发布</button></td></tr>
+    </table>
+  </section>
+
+  <section id="users" class="section">
+    <div class="topbar"><div><h1>用户管理</h1><div class="sub">M08 · 启用 / 禁用 / USER 晋升 RESCUER</div></div></div>
+    <div class="toolbar"><input class="input" placeholder="账号 / 昵称"/><select class="select"><option>全部角色</option><option>USER</option><option>RESCUER</option><option>ADMIN</option></select></div>
+    <table class="table"><tr><th>ID</th><th>账号</th><th>昵称</th><th>角色</th><th>状态</th><th>操作</th></tr>
+      <tr><td>1001</td><td>petlink_user01</td><td>小明</td><td>USER</td><td>ENABLED</td><td><button class="btn" data-modal="userDetail">详情</button><button class="btn" data-toast="账号已禁用（示意）">禁用</button><button class="btn primary" data-toast="USER → RESCUER（示意）">晋升 RESCUER</button></td></tr>
+      <tr><td>1002</td><td>rescuer01</td><td>救助员A</td><td>RESCUER</td><td>ENABLED</td><td><button class="btn" data-modal="userDetail">详情</button><button class="btn" data-toast="仅禁用账号；活动任务需通过 M03 处理（示意）">禁用</button></td></tr>
+      <tr><td>1048</td><td>user_disabled</td><td>小周</td><td>USER</td><td>DISABLED</td><td><button class="btn" data-modal="userDetail">详情</button><button class="btn primary" data-toast="账号已启用（示意）">启用</button></td></tr>
+    </table>
+  </section>
+</main>
+</div>
+
+<div id="modalMask" class="modal-mask">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">详情</h3><button class="btn" id="modalClose">关闭</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div id="pcToast" class="toast"></div>
+
+
+<script>
+document.querySelectorAll('#nav button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
+document.querySelectorAll('.text-btn[data-target]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const target=btn.dataset.target;
+    const section=document.getElementById(target);
+    if(!section) return;
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    section.classList.add('active');
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.target===target));
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+const modalContent={
+  taskDetail:`<div class="notice">任务详情：来源线索、救助人员、状态、开始/结束时间、历史救助记录。</div><p><b>任务 #4001</b> · IN_PROGRESS</p><p>16:30 已到现场；16:48 已完成简单止血。</p>`,
+  cancelTask:`<label>取消原因</label><textarea class="input">救助人员长时间失联，管理员决定取消任务。</textarea><button class="btn primary" data-modal-action>确认取消并重新开放线索</button>`,
+  resolveFailed:`<label>处理动作</label><select class="select"><option>REOPEN</option><option>CLOSE</option></select><label>resolutionReason</label><textarea class="input">附近仍有目击信息，决定重新开放救助。</textarea><button class="btn primary" data-modal-action>确认处理</button>`,
+  userDetail:`<p><b>用户 #1001</b></p><p>账号：petlink_user01</p><p>昵称：小明</p><p>角色：USER</p><p>状态：ENABLED</p><div class="notice">发布线索 3 · 救助任务 0 · 领养申请 2 · 成功领养 1</div>`,
+  adoptionRecord:`<div class="notice">正在读取领养事实记录。</div>`,
+  announcementEdit:`<label>标题</label><input class="input" value="周末流浪动物义诊活动"/><label>正文</label><textarea class="input">本周末将开展流浪动物义诊活动……</textarea><button class="btn primary" data-modal-action>保存</button>`,
+  announcementWithdraw:`<div class="notice">PUBLISHED → WITHDRAWN；撤回后不可编辑、不可重新发布。</div><button class="btn primary" data-modal-action>确认撤回</button>`,
+  animalManage:`<div id="adminAnimalPanel"></div>`
+};
+document.querySelectorAll('[data-modal]').forEach(b=>b.addEventListener('click',()=>{
+  const key=b.dataset.modal; document.getElementById('modalTitle').textContent=b.textContent.trim()||'详情';
+  document.getElementById('modalBody').innerHTML=modalContent[key]||'';
+  document.getElementById('modalMask').style.display='flex';
+  if(key==='animalManage'){
+    renderAdminAnimalPanel(b.dataset.animalName||'布丁', b.dataset.animalId||'5001', b.dataset.animalStatus||'AVAILABLE');
+  }
+  if(key==='adoptionRecord'){
+    document.getElementById('modalBody').innerHTML=`<p><b>AdoptionRecord #${b.dataset.recordId}</b></p><p>申请：#${b.dataset.applicationId}</p><p>动物：${b.dataset.recordAnimal}</p><p>领养人：${b.dataset.recordUser}</p><p>领养时间：${b.dataset.adoptedAt}</p><div class="notice">事实记录只读，不提供修改/删除。</div>`;
+  }
+}));
+document.getElementById('modalClose').onclick=()=>document.getElementById('modalMask').style.display='none';
+document.getElementById('modalMask').addEventListener('click',e=>{if(e.target.id==='modalMask')e.currentTarget.style.display='none'});
+document.addEventListener('click',e=>{if(e.target.matches('[data-modal-action]')){document.getElementById('modalMask').style.display='none';showPcToast('操作成功（示意）')}});
+document.querySelectorAll('[data-toast]').forEach(b=>b.addEventListener('click',()=>showPcToast(b.dataset.toast)));
+function showPcToast(msg){const t=document.getElementById('pcToast');t.textContent=msg;t.style.display='block';clearTimeout(window.__pct);window.__pct=setTimeout(()=>t.style.display='none',1800)}
+
+const animalStateAction={
+  TREATING:{label:'进入观察',next:'OBSERVING'},
+  OBSERVING:{label:'开放领养',next:'AVAILABLE'},
+  AVAILABLE:{label:'暂停领养',next:'SUSPENDED'},
+  SUSPENDED:{label:'恢复领养',next:'AVAILABLE'},
+  ADOPTED:null
+};
+function adminAnimalActionHtml(status){
+  const action=animalStateAction[status];
+  return action?`<button class="btn primary" data-admin-animal-action data-next="${action.next}">${action.label}</button>`:`<div class="notice">ADOPTED 不提供手工状态操作；只能由领养审核批准事务产生。</div>`;
+}
+function renderAdminAnimalPanel(name,id,status){
+  const animalPhoto=id==='5002'?'assets/ahei-black-dog.png':id==='5003'?'assets/little-orange-dog.png':'assets/pudding-cat-hero.png';
+  const species=(id==='5002'||id==='5003')?'DOG':'CAT';
+  const actionHtml=adminAnimalActionHtml(status);
+  document.getElementById('adminAnimalPanel').innerHTML=`
+    <img class="modal-animal-hero" src="${animalPhoto}" alt="${name} 动物档案照片"/>
+    <div class="statusline"><b>${name} #${id}</b><span class="badge" id="adminAnimalStatus">${status}</span></div>
+    <label>名称</label><input class="input" value="${name}"/>
+    <label>物种</label><input class="input" value="${species}"/>
+    <label>当前健康摘要</label><textarea class="input">${status==='OBSERVING'?'恢复观察中':'当前健康情况稳定'}</textarea>
+    <button class="btn" data-toast-dynamic="基本资料已保存（示意）">保存基本资料</button>
+    <div class="divider"></div>
+    <h4>图片管理</h4>
+    <div class="photo-strip"><div class="photo"><img src="${animalPhoto}" alt="${name} 档案图 1"/></div><div class="photo"><img src="${animalPhoto}" alt="${name} 档案图 2"/></div><div class="photo">＋</div></div>
+    <div class="file-help">支持 JPG / JPEG / PNG；单张 ≤ 5MB；单次新增最多 9 张。</div>
+    <div class="actions"><button class="btn" data-toast-dynamic="动物图片已添加（示意）">添加图片</button><button class="btn" data-toast-dynamic="选中图片已删除（示意）">删除图片</button><button class="btn" data-pc-file-error>模拟错误文件</button></div>
+    <div class="divider"></div>
+    <h4>健康记录</h4>
+    <div class="notice">08-29 17:10 · 已完成基础检查。</div>
+    <textarea class="input" placeholder="新增健康记录"></textarea>
+    <button class="btn" data-toast-dynamic="健康记录已追加（示意）">添加健康记录</button>
+    <div class="divider"></div>
+    <h4>合法状态操作</h4>
+    <div id="adminAnimalAction">${actionHtml}</div>`;
+}
+function commitAdminAnimalState(next,reason=''){
+  document.getElementById('adminAnimalStatus').textContent=next;
+  document.getElementById('adminAnimalAction').innerHTML=adminAnimalActionHtml(next);
+  showPcToast(`动物状态已更新为 ${next}${reason?'；原因：'+reason:''}（示意）`);
+}
+document.addEventListener('click',e=>{
+  if(e.target.matches('[data-toast-dynamic]')) showPcToast(e.target.dataset.toastDynamic);
+  if(e.target.matches('[data-admin-animal-action]')){
+    const next=e.target.dataset.next;
+    if(next==='SUSPENDED'){
+      document.getElementById('adminAnimalAction').innerHTML=`<div class="suspend-form"><label for="adminSuspendReason">暂停原因（必填）</label><textarea id="adminSuspendReason" class="input" placeholder="例如：近期需要继续观察健康情况"></textarea><button class="btn primary" data-confirm-admin-suspend>确认暂停领养</button></div>`;
+      return;
+    }
+    commitAdminAnimalState(next);
+  }
+  if(e.target.matches('[data-confirm-admin-suspend]')){
+    const reason=document.getElementById('adminSuspendReason').value.trim();
+    if(!reason){showPcToast('40001：暂停领养时必须填写原因');return;}
+    commitAdminAnimalState('SUSPENDED',reason);
+  }
+});
+
+// ---- Required reject-reason validation ----
+document.querySelectorAll('[data-clue-reject]').forEach(b=>b.addEventListener('click',()=>{
+  const v=document.getElementById('clueRejectReason').value.trim();
+  if(!v){ showPcToast('40001：驳回线索时必须填写非空原因'); return; }
+  showPcToast('线索已驳回（示意）');
+}));
+document.querySelectorAll('[data-adoption-reject]').forEach(b=>b.addEventListener('click',()=>{
+  const v=document.getElementById('adoptionRejectReason').value.trim();
+  if(!v){ showPcToast('40001：拒绝领养申请时必须填写非空原因'); return; }
+  showPcToast('领养申请已拒绝（示意）');
+}));
+
+// ---- FR-STAT date-range interaction ----
+function applyTrendRange(){
+  const from=document.getElementById('trendFrom').value;
+  const to=document.getElementById('trendTo').value;
+  if(!from||!to||from>to){ showPcToast('40001：请选择合法日期范围'); return; }
+  document.getElementById('trendTitle').textContent=`救助 / 领养趋势（DAY）· ${from} ～ ${to}`;
+  const seed=(from+to).split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  for(let i=1;i<=6;i++){
+    const h=30+((seed+i*17)%58);
+    document.getElementById('trendBar'+i).style.height=h+'%';
+  }
+  showPcToast('趋势范围已更新（示意数据）');
+}
+document.querySelectorAll('[data-this-month]').forEach(b=>b.addEventListener('click',()=>{
+  document.getElementById('trendFrom').value='2026-08-01';
+  document.getElementById('trendTo').value='2026-08-29';
+  applyTrendRange();
+}));
+document.querySelectorAll('[data-apply-trend]').forEach(b=>b.addEventListener('click',applyTrendRange));
+document.querySelectorAll('[data-refresh-stats]').forEach(b=>b.addEventListener('click',()=>{
+  applyTrendRange(); showPcToast('统计数据已刷新（示意）');
+}));
+
+document.addEventListener('click',e=>{
+  if(e.target.matches('[data-pc-file-error]')) showPcToast('40004：仅支持 JPG/JPEG/PNG，且单张不得超过 5MB');
+});
+
+</script>
+</body>
+</html>

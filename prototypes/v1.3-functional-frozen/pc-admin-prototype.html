@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PetLink PC 管理端功能原型 V1.3</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#fff; --text:#1f2329; --muted:#667085;
+  --line:#e5e7eb; --accent:#111827; --soft:#f1f5f9;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:#111827;color:#fff;padding:22px 14px;position:sticky;top:0;height:100vh}
+.brand{font-size:22px;font-weight:800;padding:0 10px 18px}.brand small{display:block;font-size:12px;color:#9ca3af;font-weight:500;margin-top:4px}
+.role{background:#1f2937;border:1px solid #374151;border-radius:10px;padding:10px;margin:0 6px 14px;font-size:13px}
+nav button{width:100%;border:0;background:transparent;color:#d1d5db;text-align:left;padding:11px 12px;border-radius:8px;cursor:pointer;margin:2px 0;font-size:14px}
+nav button:hover, nav button.active{background:#fff;color:#111827}
+main{padding:24px 28px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{font-size:24px;margin:0}.sub{color:var(--muted);font-size:13px;margin-top:5px}
+.actions{display:flex;gap:8px}.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;cursor:pointer}.btn.primary{background:#111827;color:#fff;border-color:#111827}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.metric{font-size:28px;font-weight:800;margin-top:8px}.label{font-size:13px;color:var(--muted)}
+.section{display:none}.section.active{display:block}
+.table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.table th,.table td{padding:12px 10px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}
+.table th{background:#f8fafc;color:#475467}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;font-size:12px}
+.toolbar{display:flex;gap:8px;margin:14px 0}.input,.select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.two{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.formrow{display:grid;grid-template-columns:120px 1fr;gap:10px;margin:10px 0;align-items:center}
+textarea{min-height:90px;resize:vertical}
+.input,textarea,.select{width:100%}
+.panel-title{font-weight:700;margin-bottom:10px}
+.notice{padding:10px 12px;background:#f8fafc;border-left:3px solid #94a3b8;color:#475467;font-size:13px}
+.photo-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.photo{height:88px;border-radius:10px;background:linear-gradient(135deg,#dbeafe,#e5e7eb);display:flex;align-items:center;justify-content:center;font-size:30px}
+.animal-summary{display:flex;gap:10px;align-items:center;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}
+.animal-avatar{width:62px;height:62px;border-radius:10px;background:linear-gradient(135deg,#fee2e2,#e5e7eb);display:flex;align-items:center;justify-content:center;font-size:30px}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+
+.state-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.state-group{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}.state-group h4{margin:0 0 8px}.state-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed #e5e7eb}.state-row:last-child{border-bottom:0}
+.modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50}.modal{width:min(620px,90vw);max-height:80vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;border:1px solid var(--line)}.modal-head{display:flex;justify-content:space-between;align-items:center}.toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;padding:11px 14px;border-radius:10px;display:none;z-index:60;font-size:13px}
+@media(max-width:1200px){.state-grid{grid-template-columns:repeat(2,1fr)}}
+
+.trend-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.trend-controls input{width:auto;min-width:145px}
+.bar{width:10%;background:#cbd5e1;transition:height .25s ease}
+.file-help{font-size:12px;color:#667085;margin:5px 0 8px}</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand">PetLink<small>PC 管理端 · 功能原型 V1.3</small></div>
+  <div class="role">当前角色：<b>ADMIN</b><br/>不同角色登录后仅显示其被授权的管理入口</div>
+  <nav id="nav">
+    <button data-target="dashboard" class="active">总览看板</button>
+    <button data-target="clues">线索审核</button>
+    <button data-target="tasks">救助任务</button>
+    <button data-target="animals">动物档案</button>
+    <button data-target="adoptions">领养审核</button><button data-target="adoptionRecords">领养记录监管</button>
+    <button data-target="followups">回访记录</button>
+    <button data-target="announcements">公告管理</button>
+    <button data-target="users">用户管理</button>
+  </nav>
+</aside>
+<main>
+  <section id="dashboard" class="section active">
+    <div class="topbar">
+      <div><h1>总览看板</h1><div class="sub">M08 · 状态总览 + 救助/领养趋势</div></div>
+      <div class="trend-controls">
+  <input id="trendFrom" class="input" type="date" value="2026-08-01"/>
+  <span>至</span>
+  <input id="trendTo" class="input" type="date" value="2026-08-29"/>
+  <button class="btn" data-this-month>本月</button>
+  <button class="btn primary" data-apply-trend>应用范围</button>
+  <button class="btn" data-refresh-stats>刷新</button>
+</div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="label">待审核线索</div><div class="metric">6</div></div>
+      <div class="card"><div class="label">进行中救助</div><div class="metric">3</div></div>
+      <div class="card"><div class="label">开放领养动物</div><div class="metric">22</div></div>
+      <div class="card"><div class="label">待审核领养申请</div><div class="metric">13</div></div>
+    </div>
+    <div class="two" style="margin-top:14px">
+      <div class="card"><div id="trendTitle" class="panel-title">救助 / 领养趋势（DAY）· 2026-08-01 ～ 2026-08-29</div><div class="notice">这里用于折线图：rescueSuccessCount / adoptionCount；日期按 Asia/Shanghai，空日期补 0。</div><div style="height:220px;display:flex;align-items:end;gap:10px;padding:20px 8px 0">
+        <div id="trendBar1" class="bar" style="height:45%;background:#cbd5e1"></div><div id="trendBar2" class="bar" style="height:70%;background:#94a3b8"></div><div id="trendBar3" class="bar" style="height:35%;background:#cbd5e1"></div><div id="trendBar4" class="bar" style="height:85%;background:#94a3b8"></div><div id="trendBar5" class="bar" style="height:55%;background:#cbd5e1"></div><div id="trendBar6" class="bar" style="height:65%;background:#94a3b8"></div>
+      </div></div>
+      <div class="card"><div class="panel-title">状态统计</div><table class="table"><tr><th>对象</th><th>状态</th><th>数量</th></tr>
+        <tr><td>RescueClue</td><td>PENDING_REVIEW</td><td>6</td></tr>
+        <tr><td>RescueTask</td><td>IN_PROGRESS</td><td>3</td></tr>
+        <tr><td>Animal</td><td>AVAILABLE</td><td>22</td></tr>
+        <tr><td>AdoptionApplication</td><td>PENDING</td><td>13</td></tr>
+      </table></div>
+    </div>
+  
+    <div class="card" style="margin-top:14px">
+      <div class="panel-title">FR-STAT 完整状态统计</div>
+      <div class="state-grid">
+        <div class="state-group"><h4>RescueClue · 6 状态</h4><div class="state-row"><span>PENDING_REVIEW</span><b>6</b></div><div class="state-row"><span>REJECTED</span><b>12</b></div><div class="state-row"><span>WITHDRAWN</span><b>4</b></div><div class="state-row"><span>WAITING_ACCEPT</span><b>5</b></div><div class="state-row"><span>CONVERTED</span><b>3</b></div><div class="state-row"><span>CLOSED</span><b>78</b></div></div>
+        <div class="state-group"><h4>RescueTask · 5 状态</h4><div class="state-row"><span>WAITING_START</span><b>2</b></div><div class="state-row"><span>IN_PROGRESS</span><b>3</b></div><div class="state-row"><span>SUCCESS</span><b>72</b></div><div class="state-row"><span>FAILED</span><b>9</b></div><div class="state-row"><span>CANCELED</span><b>5</b></div></div>
+        <div class="state-group"><h4>Animal · 5 状态</h4><div class="state-row"><span>TREATING</span><b>5</b></div><div class="state-row"><span>OBSERVING</span><b>4</b></div><div class="state-row"><span>AVAILABLE</span><b>22</b></div><div class="state-row"><span>SUSPENDED</span><b>2</b></div><div class="state-row"><span>ADOPTED</span><b>61</b></div></div>
+        <div class="state-group"><h4>AdoptionApplication · 5 状态</h4><div class="state-row"><span>PENDING</span><b>13</b></div><div class="state-row"><span>APPROVED</span><b>61</b></div><div class="state-row"><span>REJECTED</span><b>34</b></div><div class="state-row"><span>WITHDRAWN</span><b>8</b></div><div class="state-row"><span>INVALIDATED</span><b>47</b></div></div>
+      </div>
+    </div>
+</section>
+
+  <section id="clues" class="section">
+    <div class="topbar"><div><h1>线索审核</h1><div class="sub">M02 · 默认 PENDING_REVIEW，按 created_at / id FIFO</div></div></div>
+    <div class="toolbar"><select class="select"><option>PENDING_REVIEW</option><option>WAITING_ACCEPT</option><option>REJECTED</option></select><input class="input" placeholder="地点 / 发布人"/></div>
+    <div class="two">
+      <table class="table"><tr><th>ID</th><th>地点</th><th>状态</th><th>发布时间</th></tr>
+        <tr><td>3001</td><td>玄武区某路口</td><td><span class="badge">PENDING_REVIEW</span></td><td>10:05</td></tr>
+        <tr><td>3002</td><td>秦淮区某公园</td><td><span class="badge">PENDING_REVIEW</span></td><td>10:18</td></tr>
+      </table>
+      <div class="card"><div class="panel-title">线索 #3001</div>
+        <div class="formrow"><label>发现时间</label><div>2026-08-29 09:48</div></div>
+        <div class="formrow"><label>动物描述</label><div>一只受伤橘猫，后腿疑似外伤</div></div>
+        <div class="formrow"><label>现场情况</label><div>靠近绿化带，行动缓慢</div></div>
+        <div class="formrow"><label>联系方式</label><div>138****8000</div></div>
+        <div class="formrow" style="align-items:start"><label>现场图片</label><div class="photo-strip"><div class="photo">🐈</div><div class="photo">📍</div><div class="photo">🩹</div></div></div>
+        <div class="formrow"><label>审核意见</label><textarea id="clueRejectReason" placeholder="驳回时必填"></textarea></div>
+        <div class="actions"><button class="btn" data-clue-reject>驳回</button><button class="btn primary" data-toast="线索审核通过，状态变为 WAITING_ACCEPT（示意）">审核通过</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tasks" class="section">
+    <div class="topbar"><div><h1>救助任务</h1><div class="sub">M03 · ADMIN 监管 / RESCUER 自己任务</div></div></div>
+    <div class="toolbar"><select class="select"><option>全部状态</option><option>WAITING_START</option><option>IN_PROGRESS</option><option>FAILED</option></select></div>
+    <table class="table"><tr><th>任务</th><th>线索</th><th>救助人员</th><th>状态</th><th>操作</th></tr>
+      <tr><td>4001</td><td>3001</td><td>救助员A</td><td><span class="badge">IN_PROGRESS</span></td><td><button class="btn" data-modal="taskDetail">详情</button><button class="btn" data-modal="cancelTask">取消异常任务</button></td></tr>
+      <tr><td>4002</td><td>3005</td><td>救助员B</td><td><span class="badge">FAILED</span></td><td><button class="btn" data-modal="resolveFailed">REOPEN / CLOSE</button></td></tr>
+      <tr><td>4003</td><td>3007</td><td>救助员C</td><td><span class="badge">WAITING_START</span></td><td><button class="btn" data-modal="taskDetail">详情</button></td></tr>
+    </table>
+  </section>
+
+  <section id="animals" class="section">
+    <div class="topbar"><div><h1>动物档案</h1><div class="sub">M04 · 维护基本信息、图片、健康记录、领养状态</div></div></div>
+    <div class="toolbar"><select class="select"><option>全部状态</option><option>TREATING</option><option>OBSERVING</option><option>AVAILABLE</option><option>SUSPENDED</option><option>ADOPTED</option></select></div>
+    <table class="table"><tr><th>ID</th><th>名称</th><th>物种</th><th>健康摘要</th><th>状态</th><th>操作</th></tr>
+      <tr><td>5001</td><td>橘子</td><td>CAT</td><td>恢复良好</td><td><span class="badge">AVAILABLE</span></td><td><button class="btn" data-modal="animalManage" data-animal-name="橘子" data-animal-id="5001" data-animal-status="AVAILABLE">档案详情</button></td></tr>
+      <tr><td>5002</td><td>小黑</td><td>DOG</td><td>观察中</td><td><span class="badge">OBSERVING</span></td><td><button class="btn" data-modal="animalManage" data-animal-name="小黑" data-animal-id="5002" data-animal-status="OBSERVING">档案详情</button></td></tr>
+    </table>
+  </section>
+
+  <section id="adoptions" class="section">
+    <div class="topbar"><div><h1>领养审核</h1><div class="sub">M05 · ADMIN 独立审核；批准后创建 AdoptionRecord 并将 Animal 置为 ADOPTED</div></div></div>
+    <div class="two">
+      <table class="table"><tr><th>申请</th><th>动物</th><th>申请人</th><th>状态</th></tr>
+        <tr><td>6001</td><td>橘子</td><td>用户A</td><td><span class="badge">PENDING</span></td></tr>
+      </table>
+      <div class="card"><div class="panel-title">申请 #6001</div>
+        <div class="animal-summary"><div class="animal-avatar">🐈</div><div><b>目标动物：橘子</b><div class="sub">CAT · MALE · 约14个月 · 当前 AVAILABLE</div><div class="sub">健康摘要：后腿外伤已恢复，精神与食欲正常</div></div></div>
+        <p><b>领养理由：</b>希望长期照顾，并能承担医疗与生活费用。</p>
+        <p><b>住房条件：</b>自有住房，可养宠。</p>
+        <p><b>家庭情况：</b>3 人，家人均同意。</p>
+        <p><b>养宠经验：</b>曾养猫 5 年，有日常护理经验。</p>
+        <p><b>联系方式：</b>138****8000</p>
+        <div class="formrow"><label>驳回原因</label><textarea id="adoptionRejectReason" placeholder="REJECT 时必填"></textarea></div>
+        <div class="actions"><button class="btn" data-adoption-reject>拒绝</button><button class="btn primary" data-toast="领养申请已批准，已生成 AdoptionRecord（示意）">批准</button></div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section id="adoptionRecords" class="section">
+    <div class="topbar"><div><h1>领养记录监管</h1><div class="sub">M08 · AdoptionRecord 只读监管</div></div></div>
+    <div class="toolbar"><input class="input" placeholder="userId / animalId / applicationId"/></div>
+    <table class="table"><tr><th>记录ID</th><th>申请ID</th><th>动物</th><th>领养人</th><th>领养时间</th><th>操作</th></tr>
+      <tr><td>7001</td><td>6001</td><td>橘子 #5001</td><td>用户A #1001</td><td>2026-08-20 15:00</td><td><button class="btn" data-modal="adoptionRecord">详情</button></td></tr>
+      <tr><td>6998</td><td>5990</td><td>豆包 #4991</td><td>用户B #1028</td><td>2026-08-18 11:20</td><td><button class="btn" data-modal="adoptionRecord">详情</button></td></tr>
+    </table>
+  </section>
+
+  <section id="followups" class="section">
+    <div class="topbar"><div><h1>回访记录</h1><div class="sub">M06 · ADMIN 查看全部；RESCUER 查看负责动物回访</div></div></div>
+    <table class="table"><tr><th>回访ID</th><th>领养记录</th><th>动物</th><th>提交人</th><th>内容</th><th>时间</th></tr>
+      <tr><td>8001</td><td>7001</td><td>橘子</td><td>用户A</td><td>最近适应得很好，食欲正常。</td><td>16:00</td></tr>
+    </table>
+  </section>
+
+  <section id="announcements" class="section">
+    <div class="topbar"><div><h1>公告管理</h1><div class="sub">M07 · DRAFT → PUBLISHED → WITHDRAWN</div></div><button class="btn primary" data-modal="announcementEdit">新建草稿</button></div>
+    <table class="table"><tr><th>ID</th><th>标题</th><th>状态</th><th>版本</th><th>操作</th></tr>
+      <tr><td>10001</td><td>周末流浪动物义诊活动</td><td><span class="badge">PUBLISHED</span></td><td>1</td><td><button class="btn" data-modal="announcementEdit">编辑</button><button class="btn" data-modal="announcementWithdraw">撤回</button></td></tr>
+      <tr><td>10002</td><td>志愿者招募</td><td><span class="badge">DRAFT</span></td><td>0</td><td><button class="btn" data-modal="announcementEdit">编辑</button><button class="btn primary" data-toast="公告已发布（示意）">发布</button></td></tr>
+    </table>
+  </section>
+
+  <section id="users" class="section">
+    <div class="topbar"><div><h1>用户管理</h1><div class="sub">M08 · 启用 / 禁用 / USER 晋升 RESCUER</div></div></div>
+    <div class="toolbar"><input class="input" placeholder="账号 / 昵称"/><select class="select"><option>全部角色</option><option>USER</option><option>RESCUER</option><option>ADMIN</option></select></div>
+    <table class="table"><tr><th>ID</th><th>账号</th><th>昵称</th><th>角色</th><th>状态</th><th>操作</th></tr>
+      <tr><td>1001</td><td>petlink_user01</td><td>小明</td><td>USER</td><td>ENABLED</td><td><button class="btn" data-modal="userDetail">详情</button><button class="btn" data-toast="账号已禁用（示意）">禁用</button><button class="btn primary" data-toast="USER → RESCUER（示意）">晋升 RESCUER</button></td></tr>
+      <tr><td>1002</td><td>rescuer01</td><td>救助员A</td><td>RESCUER</td><td>ENABLED</td><td><button class="btn" data-modal="userDetail">详情</button><button class="btn" data-toast="仅禁用账号；活动任务需通过 M03 处理（示意）">禁用</button></td></tr>
+      <tr><td>1048</td><td>user_disabled</td><td>小周</td><td>USER</td><td>DISABLED</td><td><button class="btn" data-modal="userDetail">详情</button><button class="btn primary" data-toast="账号已启用（示意）">启用</button></td></tr>
+    </table>
+  </section>
+</main>
+</div>
+
+<div id="modalMask" class="modal-mask">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">详情</h3><button class="btn" id="modalClose">关闭</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div id="pcToast" class="toast"></div>
+
+
+<script>
+document.querySelectorAll('#nav button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
+
+const modalContent={
+  taskDetail:`<div class="notice">任务详情：来源线索、救助人员、状态、开始/结束时间、历史救助记录。</div><p><b>任务 #4001</b> · IN_PROGRESS</p><p>16:30 已到现场；16:48 已完成简单止血。</p>`,
+  cancelTask:`<label>取消原因</label><textarea class="input">救助人员长时间失联，管理员决定取消任务。</textarea><button class="btn primary" data-modal-action>确认取消并重新开放线索</button>`,
+  resolveFailed:`<label>处理动作</label><select class="select"><option>REOPEN</option><option>CLOSE</option></select><label>resolutionReason</label><textarea class="input">附近仍有目击信息，决定重新开放救助。</textarea><button class="btn primary" data-modal-action>确认处理</button>`,
+  userDetail:`<p><b>用户 #1001</b></p><p>账号：petlink_user01</p><p>昵称：小明</p><p>角色：USER</p><p>状态：ENABLED</p><div class="notice">发布线索 3 · 救助任务 0 · 领养申请 2 · 成功领养 1</div>`,
+  adoptionRecord:`<p><b>AdoptionRecord #7001</b></p><p>申请：#6001</p><p>动物：橘子 #5001</p><p>领养人：用户A #1001</p><p>领养时间：2026-08-20 15:00</p><div class="notice">事实记录只读，不提供修改/删除。</div>`,
+  announcementEdit:`<label>标题</label><input class="input" value="周末流浪动物义诊活动"/><label>正文</label><textarea class="input">本周末将开展流浪动物义诊活动……</textarea><button class="btn primary" data-modal-action>保存</button>`,
+  announcementWithdraw:`<div class="notice">PUBLISHED → WITHDRAWN；撤回后不可编辑、不可重新发布。</div><button class="btn primary" data-modal-action>确认撤回</button>`,
+  animalManage:`<div id="adminAnimalPanel"></div>`
+};
+document.querySelectorAll('[data-modal]').forEach(b=>b.addEventListener('click',()=>{
+  const key=b.dataset.modal; document.getElementById('modalTitle').textContent=b.textContent.trim()||'详情';
+  document.getElementById('modalBody').innerHTML=modalContent[key]||'';
+  document.getElementById('modalMask').style.display='flex';
+  if(key==='animalManage'){
+    renderAdminAnimalPanel(b.dataset.animalName||'橘子', b.dataset.animalId||'5001', b.dataset.animalStatus||'TREATING');
+  }
+}));
+document.getElementById('modalClose').onclick=()=>document.getElementById('modalMask').style.display='none';
+document.getElementById('modalMask').addEventListener('click',e=>{if(e.target.id==='modalMask')e.currentTarget.style.display='none'});
+document.addEventListener('click',e=>{if(e.target.matches('[data-modal-action]')){document.getElementById('modalMask').style.display='none';showPcToast('操作成功（示意）')}});
+document.querySelectorAll('[data-toast]').forEach(b=>b.addEventListener('click',()=>showPcToast(b.dataset.toast)));
+function showPcToast(msg){const t=document.getElementById('pcToast');t.textContent=msg;t.style.display='block';clearTimeout(window.__pct);window.__pct=setTimeout(()=>t.style.display='none',1800)}
+
+const animalStateAction={
+  TREATING:{label:'进入观察',next:'OBSERVING'},
+  OBSERVING:{label:'开放领养',next:'AVAILABLE'},
+  AVAILABLE:{label:'暂停领养',next:'SUSPENDED'},
+  SUSPENDED:{label:'恢复领养',next:'AVAILABLE'},
+  ADOPTED:null
+};
+function renderAdminAnimalPanel(name,id,status){
+  const action=animalStateAction[status];
+  const actionHtml=action
+    ? `<button class="btn primary" data-admin-animal-action data-next="${action.next}">${action.label}</button>`
+    : `<div class="notice">ADOPTED 不提供手工状态操作；只能由领养审核批准事务产生。</div>`;
+  document.getElementById('adminAnimalPanel').innerHTML=`
+    <div class="statusline"><b>${name} #${id}</b><span class="badge" id="adminAnimalStatus">${status}</span></div>
+    <label>名称</label><input class="input" value="${name}"/>
+    <label>物种</label><input class="input" value="${name==='小黑'?'DOG':'CAT'}"/>
+    <label>当前健康摘要</label><textarea class="input">${status==='OBSERVING'?'恢复观察中':'当前健康情况稳定'}</textarea>
+    <button class="btn" data-toast-dynamic="基本资料已保存（示意）">保存基本资料</button>
+    <div class="divider"></div>
+    <h4>图片管理</h4>
+    <div class="photo-strip"><div class="photo">🐾</div><div class="photo">🐾</div><div class="photo">＋</div></div>
+    <div class="file-help">支持 JPG / JPEG / PNG；单张 ≤ 5MB；单次新增最多 9 张。</div>
+    <div class="actions"><button class="btn" data-toast-dynamic="动物图片已添加（示意）">添加图片</button><button class="btn" data-toast-dynamic="选中图片已删除（示意）">删除图片</button><button class="btn" data-pc-file-error>模拟错误文件</button></div>
+    <div class="divider"></div>
+    <h4>健康记录</h4>
+    <div class="notice">08-29 17:10 · 已完成基础检查。</div>
+    <textarea class="input" placeholder="新增健康记录"></textarea>
+    <button class="btn" data-toast-dynamic="健康记录已追加（示意）">添加健康记录</button>
+    <div class="divider"></div>
+    <h4>合法状态操作</h4>
+    <div id="adminAnimalAction">${actionHtml}</div>`;
+}
+document.addEventListener('click',e=>{
+  if(e.target.matches('[data-toast-dynamic]')) showPcToast(e.target.dataset.toastDynamic);
+  if(e.target.matches('[data-admin-animal-action]')){
+    const next=e.target.dataset.next;
+    document.getElementById('adminAnimalStatus').textContent=next;
+    const nextAction=animalStateAction[next];
+    document.getElementById('adminAnimalAction').innerHTML=nextAction
+      ? `<button class="btn primary" data-admin-animal-action data-next="${nextAction.next}">${nextAction.label}</button>`
+      : `<div class="notice">ADOPTED 不提供手工状态操作。</div>`;
+    showPcToast('动物状态已更新为 '+next+'（示意）');
+  }
+});
+
+// ---- Required reject-reason validation ----
+document.querySelectorAll('[data-clue-reject]').forEach(b=>b.addEventListener('click',()=>{
+  const v=document.getElementById('clueRejectReason').value.trim();
+  if(!v){ showPcToast('40001：驳回线索时必须填写非空原因'); return; }
+  showPcToast('线索已驳回（示意）');
+}));
+document.querySelectorAll('[data-adoption-reject]').forEach(b=>b.addEventListener('click',()=>{
+  const v=document.getElementById('adoptionRejectReason').value.trim();
+  if(!v){ showPcToast('40001：拒绝领养申请时必须填写非空原因'); return; }
+  showPcToast('领养申请已拒绝（示意）');
+}));
+
+// ---- FR-STAT date-range interaction ----
+function applyTrendRange(){
+  const from=document.getElementById('trendFrom').value;
+  const to=document.getElementById('trendTo').value;
+  if(!from||!to||from>to){ showPcToast('40001：请选择合法日期范围'); return; }
+  document.getElementById('trendTitle').textContent=`救助 / 领养趋势（DAY）· ${from} ～ ${to}`;
+  const seed=(from+to).split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  for(let i=1;i<=6;i++){
+    const h=30+((seed+i*17)%58);
+    document.getElementById('trendBar'+i).style.height=h+'%';
+  }
+  showPcToast('趋势范围已更新（示意数据）');
+}
+document.querySelectorAll('[data-this-month]').forEach(b=>b.addEventListener('click',()=>{
+  document.getElementById('trendFrom').value='2026-08-01';
+  document.getElementById('trendTo').value='2026-08-29';
+  applyTrendRange();
+}));
+document.querySelectorAll('[data-apply-trend]').forEach(b=>b.addEventListener('click',applyTrendRange));
+document.querySelectorAll('[data-refresh-stats]').forEach(b=>b.addEventListener('click',()=>{
+  applyTrendRange(); showPcToast('统计数据已刷新（示意）');
+}));
+
+document.addEventListener('click',e=>{
+  if(e.target.matches('[data-pc-file-error]')) showPcToast('40004：仅支持 JPG/JPEG/PNG，且单张不得超过 5MB');
+});
+
+</script>
+</body>
+</html>

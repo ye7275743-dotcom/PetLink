@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${PETLINK_DB_URL}
+    username: ${PETLINK_DB_USER}
+    password: ${PETLINK_DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+petlink:
+  jwt:
+    secret: ${PETLINK_JWT_SECRET}
+
+  cors:
+    allowed-origins:
+      - ${PETLINK_CORS_ORIGIN_PC}

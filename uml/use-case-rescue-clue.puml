@@ -1,0 +1,42 @@
+@startuml
+title PetLink V1.0 救助线索管理用例图
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+actor "普通用户\nUSER" as User
+
+rectangle "PetLink：救助线索管理" {
+    usecase "发布救助线索\nUC-01" as C_PublishClue
+    usecase "查看本人救助线索" as C_ViewOwnClue
+    usecase "修改本人待审核线索" as C_EditClue
+    usecase "撤回本人待审核线索" as C_WithdrawClue
+    usecase "审核救助线索\nUC-02" as C_AuditClue
+}
+
+actor "救助人员\nRESCUER" as Rescuer
+actor "系统管理员\nADMIN" as Admin
+
+User -- C_PublishClue
+User -- C_ViewOwnClue
+User -- C_EditClue
+User -- C_WithdrawClue
+
+C_PublishClue -- Rescuer
+C_ViewOwnClue -- Rescuer
+C_EditClue -- Rescuer
+C_WithdrawClue -- Rescuer
+
+C_AuditClue -- Admin
+
+note bottom of C_EditClue
+仅 PENDING_REVIEW 状态且由本人发布的线索可修改或撤回。
+end note
+
+note bottom of C_AuditClue
+审核结果为通过或驳回；驳回必须填写原因。
+end note
+
+@enduml

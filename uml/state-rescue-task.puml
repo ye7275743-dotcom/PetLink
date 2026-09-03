@@ -1,0 +1,32 @@
+@startuml
+title RescueTask 救助任务状态图
+
+skinparam shadowing false
+
+[*] --> WAITING_START : RESCUER 接取成功\n/ 系统创建 RescueTask
+
+WAITING_START --> IN_PROGRESS : 负责人 RESCUER 发起开始救助\n/ 系统条件更新任务状态
+
+WAITING_START --> CANCELED : ADMIN 取消异常任务\n[取消原因必填]\n/ 系统取消任务并重新开放线索
+
+IN_PROGRESS --> SUCCESS : 负责人 RESCUER 提交完成\n/ 系统原子建档并关闭线索
+
+IN_PROGRESS --> FAILED : 负责人 RESCUER 提交失败\n[失败原因必填]\n/ 系统更新任务状态
+
+IN_PROGRESS --> CANCELED : ADMIN 取消异常任务\n[取消原因必填]\n/ 系统取消任务并重新开放线索
+
+SUCCESS --> [*]
+FAILED --> [*]
+CANCELED --> [*]
+
+note right of FAILED
+FAILED 是当前 RescueTask 的终态。
+
+后续 ADMIN 处理的是关联 RescueClue，
+不会恢复或修改原 RescueTask。
+
+如果线索重新开放，
+未来会创建新的 RescueTask。
+end note
+
+@enduml

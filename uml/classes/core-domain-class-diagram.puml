@@ -1,0 +1,290 @@
+@startuml
+title PetLink 核心领域类图 V1.0
+
+hide empty members
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+class User {
+  +Long id
+  +String account
+  +String passwordHash
+  +String nickname
+  +String phone
+  +RoleCode roleCode
+  +UserStatus status
+}
+
+class RescueClue {
+  +Long id
+  +Long publisherId
+  +String location
+  +OffsetDateTime foundTime
+  +String animalDescription
+  +String sceneDescription
+  +String contact
+  +RescueClueStatus status
+  +Long reviewerId
+  +OffsetDateTime reviewedAt
+  +String rejectReason
+}
+
+class RescueClueImage {
+  +Long id
+  +Long clueId
+  +String imagePath
+  +Integer sortOrder
+}
+
+class RescueTask {
+  +Long id
+  +Long clueId
+  +Long rescuerId
+  +RescueTaskStatus status
+  +OffsetDateTime startedAt
+  +OffsetDateTime finishedAt
+  +String failureReason
+  +String cancelReason
+}
+
+class RescueRecord {
+  +Long id
+  +Long taskId
+  +Long recorderId
+  +String content
+  +OffsetDateTime createdAt
+}
+
+class Animal {
+  +Long id
+  +Long rescueTaskId
+  +String name
+  +String species
+  +AnimalSex sex
+  +Integer estimatedAgeMonths
+  +String color
+  +String healthCondition
+  +AnimalStatus status
+  +String suspendReason
+  +Integer version
+}
+
+class AnimalImage {
+  +Long id
+  +Long animalId
+  +String imagePath
+  +Integer sortOrder
+}
+
+class HealthRecord {
+  +Long id
+  +Long animalId
+  +Long recorderId
+  +String content
+  +OffsetDateTime createdAt
+}
+
+class AdoptionApplication {
+  +Long id
+  +Long userId
+  +Long animalId
+  +String adoptionReason
+  +String housingCondition
+  +String familyMembers
+  +String petExperience
+  +String contact
+  +AdoptionApplicationStatus status
+  +Long reviewerId
+  +OffsetDateTime reviewedAt
+  +String rejectReason
+}
+
+class AdoptionRecord {
+  +Long id
+  +Long applicationId
+  +Long animalId
+  +Long userId
+  +OffsetDateTime adoptedAt
+}
+
+class FollowUpRecord {
+  +Long id
+  +Long adoptionRecordId
+  +Long submitterId
+  +String content
+  +String healthCondition
+  +String idempotencyKey
+  +OffsetDateTime createdAt
+}
+
+class FollowUpImage {
+  +Long id
+  +Long followUpId
+  +String imagePath
+  +Integer sortOrder
+}
+
+class Favorite {
+  +Long id
+  +Long userId
+  +Long animalId
+  +OffsetDateTime createdAt
+}
+
+class Announcement {
+  +Long id
+  +String title
+  +String content
+  +AnnouncementStatus status
+  +Long createdBy
+  +Long updatedBy
+  +OffsetDateTime publishedAt
+  +Integer version
+}
+
+class OperationLog {
+  +Long id
+  +BusinessType businessType
+  +Long businessId
+  +OperationType operationType
+  +String beforeStatus
+  +String afterStatus
+  +Long operatorId
+  +String reason
+  +OffsetDateTime createdAt
+}
+
+enum RoleCode {
+  USER
+  RESCUER
+  ADMIN
+}
+
+enum UserStatus {
+  ENABLED
+  DISABLED
+}
+
+enum RescueClueStatus {
+  PENDING_REVIEW
+  REJECTED
+  WITHDRAWN
+  WAITING_ACCEPT
+  CONVERTED
+  CLOSED
+}
+
+enum RescueTaskStatus {
+  WAITING_START
+  IN_PROGRESS
+  SUCCESS
+  FAILED
+  CANCELED
+}
+
+enum AnimalStatus {
+  TREATING
+  OBSERVING
+  AVAILABLE
+  SUSPENDED
+  ADOPTED
+}
+
+enum AnimalSex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum AdoptionApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  INVALIDATED
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  WITHDRAWN
+}
+
+User "1" -- "0..*" RescueClue : publishes >
+User "0..1" -- "0..*" RescueClue : reviews >
+RescueClue "1" *-- "1..*" RescueClueImage
+
+RescueClue "1" -- "0..*" RescueTask
+User "1" -- "0..*" RescueTask : rescuer >
+RescueTask "1" *-- "0..*" RescueRecord
+User "1" -- "0..*" RescueRecord : records >
+
+RescueTask "1" -- "0..*" Animal : creates >
+Animal "1" *-- "0..*" AnimalImage
+Animal "1" *-- "0..*" HealthRecord
+User "1" -- "0..*" HealthRecord : records >
+
+User "1" -- "0..*" AdoptionApplication : applies >
+User "0..1" -- "0..*" AdoptionApplication : reviews >
+Animal "1" -- "0..*" AdoptionApplication
+AdoptionApplication "1" -- "0..1" AdoptionRecord
+Animal "1" -- "0..1" AdoptionRecord
+User "1" -- "0..*" AdoptionRecord : adopter >
+
+AdoptionRecord "1" *-- "0..*" FollowUpRecord
+User "1" -- "0..*" FollowUpRecord : submits >
+FollowUpRecord "1" *-- "0..*" FollowUpImage
+
+User "1" -- "0..*" Favorite
+Animal "1" -- "0..*" Favorite
+
+User "1" -- "0..*" Announcement : creates >
+User "1" -- "0..*" Announcement : last updates >
+User "1" -- "0..*" OperationLog : operates >
+
+User ..> RoleCode
+User ..> UserStatus
+RescueClue ..> RescueClueStatus
+RescueTask ..> RescueTaskStatus
+Animal ..> AnimalStatus
+Animal ..> AnimalSex
+AdoptionApplication ..> AdoptionApplicationStatus
+Announcement ..> AnnouncementStatus
+
+note bottom of RescueTask
+普通任务可关联 0 个 Animal；
+仅 SUCCESS RescueTask 必须关联至少 1 个 Animal，
+由 UC-04 成功事务保证。
+end note
+
+note bottom of OperationLog
+businessId 为多态逻辑业务引用，
+不建立物理外键。
+
+BusinessType 与 OperationType 的正式枚举值
+已在审计日志设计中定义，本图不重复展开。
+end note
+
+note bottom of AdoptionRecord
+不可变事实记录：
+不提供普通修改/删除。
+end note
+
+note bottom of FollowUpRecord
+append-only；
+同一 AdoptionRecord 可有多次回访。
+end note
+
+note bottom of Animal
+负责 RESCUER 通过：
+Animal.rescueTaskId
+→ RescueTask.rescuerId 派生，
+不额外保存 responsibleRescuerId。
+end note
+
+note "为保持主要类图可读性：\nmutable entity 的通用 createdAt/updatedAt、\n数据库生成约束列 activeClueId/approvedAnimalId\n未在本图展开。" as DomainOmissionNote
+
+@enduml
+

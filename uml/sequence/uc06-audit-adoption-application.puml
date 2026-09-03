@@ -1,0 +1,129 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-06 ADMIN 审核领养申请
+
+actor "ADMIN" as Admin
+participant "PC管理端\nVue3" as Web
+participant "AdoptionApplicationController" as C
+participant "AdoptionApplicationService" as S
+participant "AnimalMapper" as AM
+participant "AdoptionApplicationMapper" as AAM
+participant "AdoptionRecordMapper" as ARM
+participant "OperationLogMapper" as OLM
+database "MySQL" as DB
+
+note over Web,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+Admin -> Web : 提交审核
+Web -> C : POST /api/admin/adoption-applications/{applicationId}/audit
+C -> S : audit(applicationId, adminId, request)
+
+alt decision = REJECT
+  S -> DB : BEGIN
+  S -> AAM : SELECT target Application FOR UPDATE
+  AAM -> DB : SELECT ... FOR UPDATE
+  DB --> AAM : target / none
+
+  alt target 不存在
+    S -> DB : ROLLBACK
+    S --> C : 40401 RESOURCE_NOT_FOUND
+
+  else target.status != PENDING
+    S -> DB : ROLLBACK
+    S --> C : 40901 BUSINESS_STATE_CONFLICT
+
+  else target.userId = adminId
+    S -> DB : ROLLBACK
+    S --> C : 40301 FORBIDDEN
+
+  else 合法 REJECT
+    S -> AAM : UPDATE target\nPENDING→REJECTED\nreviewer/reviewedAt/rejectReason
+    AAM -> DB : UPDATE
+
+    S -> OLM : INSERT OperationLog\nADOPTION_APPLICATION + AUDIT_REJECT\nPENDING→REJECTED\nreason=rejectReason
+    OLM -> DB : INSERT
+
+    break 任一数据库写入或 OperationLog 写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : AdoptionAuditResponse\nadoptionRecord=null
+  end
+
+else decision = APPROVE
+  S -> AAM : 普通读取 target 定位 animalId
+  AAM -> DB : SELECT
+  DB --> AAM : animalId / none
+
+  alt target 不存在
+    S --> C : 40401 RESOURCE_NOT_FOUND
+  else target 存在
+    S -> DB : BEGIN
+
+    S -> AM : SELECT Animal FOR UPDATE
+    AM -> DB : SELECT ... FOR UPDATE
+    DB --> AM : locked Animal
+
+    S -> AAM : SELECT target Application FOR UPDATE
+    AAM -> DB : SELECT ... FOR UPDATE
+    DB --> AAM : locked target
+
+    S -> S : 校验 target.id/applicationId\nanimal一致\nPENDING\nAnimal=AVAILABLE\ntarget.userId != adminId
+
+    alt target.userId = adminId
+      S -> DB : ROLLBACK
+      S --> C : 40301 FORBIDDEN
+    else target状态或Animal状态冲突
+      S -> DB : ROLLBACK
+      S --> C : 40901 BUSINESS_STATE_CONFLICT
+    else 合法 APPROVE
+      S -> AAM : SELECT other PENDING\nsame animal ORDER BY id ASC FOR UPDATE
+      AAM -> DB : SELECT ... FOR UPDATE
+      DB --> AAM : locked others
+
+      S -> AAM : UPDATE target\nPENDING→APPROVED\nreviewer/reviewedAt
+      AAM -> DB : UPDATE
+
+      S -> ARM : INSERT AdoptionRecord\napplication/animal/user copied from target
+      ARM -> DB : INSERT
+      DB --> ARM : adoptionRecordId
+
+      S -> AM : UPDATE Animal\nAVAILABLE→ADOPTED\nversion=version+1
+      AM -> DB : UPDATE
+
+      loop 每个 other PENDING
+        S -> AAM : UPDATE → INVALIDATED
+        AAM -> DB : UPDATE
+        S -> OLM : INSERT OperationLog\nADOPTION_APPLICATION + AUTO_INVALIDATE\nPENDING→INVALIDATED
+        OLM -> DB : INSERT
+      end
+
+      S -> OLM : INSERT OperationLog\nADOPTION_APPLICATION + AUDIT_APPROVE\nPENDING→APPROVED
+      OLM -> DB : INSERT
+
+      S -> OLM : INSERT OperationLog\nANIMAL + ADOPT\nAVAILABLE→ADOPTED
+      OLM -> DB : INSERT
+
+      break 任一数据库写入或 OperationLog 写入失败
+        S -> DB : ROLLBACK
+        S --> C : 统一业务异常
+      end
+
+      S -> DB : COMMIT
+      S --> C : AdoptionAuditResponse\napplication + adoptionRecord
+    end
+  end
+end
+
+C --> Web : ApiResponse
+Web --> Admin : 展示审核结果
+
+@enduml
+

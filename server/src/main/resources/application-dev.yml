@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${PETLINK_DB_URL:jdbc:mysql://127.0.0.1:3306/petlink?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${PETLINK_DB_USER:root}
+    password: ${PETLINK_DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+petlink:
+  jwt:
+    secret: ${PETLINK_JWT_SECRET}
+
+  cors:
+    allowed-origins:
+      - ${PETLINK_CORS_ORIGIN_PC:http://localhost:5173}
+      - ${PETLINK_CORS_ORIGIN_PC_IP:http://127.0.0.1:5173}
+      - ${PETLINK_CORS_ORIGIN_MOBILE:http://localhost:5174}
+      - ${PETLINK_CORS_ORIGIN_MOBILE_IP:http://127.0.0.1:5174}

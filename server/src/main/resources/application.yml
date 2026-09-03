@@ -1,0 +1,47 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: petlink-server
+  jackson:
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  pattern:
+    level: "%5p [req:%X{requestId:-}]"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+petlink:
+  api:
+    clue-submit-idempotency-ttl: ${PETLINK_CLUE_IDEMPOTENCY_TTL:PT10M}
+    clue-idempotency-cleanup-interval-ms: ${PETLINK_CLUE_IDEMPOTENCY_CLEANUP_INTERVAL_MS:60000}
+  jwt:
+    expires-in-seconds: ${PETLINK_JWT_EXPIRES_IN_SECONDS:7200}
+  file:
+    temporary-ttl: ${PETLINK_TEMPORARY_TTL:PT1H}
+    cleanup-interval-ms: ${PETLINK_FILE_CLEANUP_INTERVAL_MS:3600000}
+    root: ${PETLINK_FILE_ROOT:./data/uploads}

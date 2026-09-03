@@ -1,0 +1,28 @@
+@startuml
+title Animal 动物档案状态图
+
+skinparam shadowing false
+
+[*] --> TREATING : RescueTask 救助成功\n/ 系统创建动物档案
+
+TREATING --> OBSERVING : 负责 RESCUER / ADMIN 发起状态调整\n/ 系统更新动物状态
+
+OBSERVING --> AVAILABLE : 负责 RESCUER / ADMIN 确认符合领养条件\n/ 系统开放领养
+
+AVAILABLE --> SUSPENDED : 负责 RESCUER / ADMIN 发起暂停领养\n[填写原因]\n/ 系统更新动物状态
+
+SUSPENDED --> AVAILABLE : 负责 RESCUER / ADMIN 发起恢复领养\n/ 系统恢复领养资格
+
+AVAILABLE --> ADOPTED : ADMIN 批准领养申请\n/ 系统在领养批准事务中自动更新
+
+ADOPTED --> [*]
+
+note right of ADOPTED
+ADOPTED 不能由任何角色手工设置。
+
+只能在 UC-06 领养批准事务中，
+由系统自动执行：
+AVAILABLE → ADOPTED。
+end note
+
+@enduml

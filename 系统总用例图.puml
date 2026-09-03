@@ -1,0 +1,348 @@
+@startuml
+
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+
+' =====================================================
+' Actor
+' =====================================================
+
+actor "未登录访客\nVISITOR" as Visitor
+actor "普通用户\nUSER" as User
+actor "救助人员\nRESCUER" as Rescuer
+actor "系统管理员\nADMIN" as Admin
+
+
+rectangle "PetLink 流浪动物救助与领养服务平台" {
+
+
+    ' =================================================
+    ' 用户与认证
+    ' =================================================
+
+    package "用户与认证" {
+
+        usecase "注册" as UC_Register
+        usecase "登录" as UC_Login
+        usecase "维护个人资料" as UC_Profile
+    }
+
+
+    ' =================================================
+    ' 动物浏览与收藏
+    ' =================================================
+
+    package "动物浏览与收藏" {
+
+        usecase "浏览动物" as UC_BrowseAnimal
+        usecase "筛选动物" as UC_FilterAnimal
+        usecase "查看动物详情" as UC_AnimalDetail
+
+        usecase "收藏动物" as UC_Favorite
+        usecase "取消收藏" as UC_Unfavorite
+        usecase "查看本人收藏列表" as UC_ViewFavorites
+    }
+
+
+    ' =================================================
+    ' 救助线索管理
+    ' =================================================
+
+    package "救助线索管理" {
+
+        usecase "发布救助线索\nUC-01" as UC_PublishClue
+
+        usecase "查看本人救助线索" as UC_ViewOwnClue
+        usecase "修改待审核线索" as UC_EditClue
+        usecase "撤回待审核线索" as UC_WithdrawClue
+
+        usecase "审核救助线索\nUC-02" as UC_AuditClue
+    }
+
+
+    ' =================================================
+    ' 救助任务管理
+    ' =================================================
+
+    package "救助任务管理" {
+
+        usecase "查看待接取线索" as UC_ViewWaiting
+
+        usecase "接取救助任务\nUC-03" as UC_AcceptTask
+
+        usecase "更新并完成救助任务\nUC-04" as UC_UpdateTask
+
+        usecase "填写救助记录" as UC_RescueRecord
+
+        usecase "查看 / 管理救助任务" as UC_ManageTask
+
+        usecase "处理异常任务" as UC_HandleAbnormal
+    }
+
+
+    ' =================================================
+    ' 动物档案管理
+    ' =================================================
+
+    package "动物档案管理" {
+
+        usecase "创建动物档案" as UC_CreateAnimal
+
+        usecase "维护动物档案" as UC_EditAnimal
+
+        usecase "添加健康记录" as UC_AddHealth
+
+        usecase "查看健康记录" as UC_ViewHealth
+
+        usecase "管理动物图片" as UC_ManageAnimalImage
+    }
+
+
+    ' =================================================
+    ' 领养管理
+    ' =================================================
+
+    package "领养管理" {
+
+        usecase "提交领养申请\nUC-05" as UC_ApplyAdoption
+
+        usecase "撤回本人待审核申请" as UC_WithdrawApplication
+
+        usecase "查看本人领养申请及状态" as UC_ViewApplication
+
+        usecase "审核领养申请\nUC-06" as UC_AuditAdoption
+
+        usecase "查看本人领养记录" as UC_ViewOwnAdoption
+
+        usecase "管理领养记录" as UC_ManageAdoption
+
+        usecase "查看负责动物的\n领养情况" as UC_ViewResponsibleAdoption
+    }
+
+
+    ' =================================================
+    ' 领养回访
+    ' =================================================
+
+    package "领养回访" {
+
+        usecase "提交领养回访\nUC-07" as UC_SubmitFollowUp
+
+        usecase "查看本人回访" as UC_ViewOwnFollowUp
+
+        usecase "查看负责动物的回访" as UC_ViewResponsibleFollowUp
+
+        usecase "查看全部回访" as UC_AdminFollowUp
+    }
+
+
+    ' =================================================
+    ' 公告与后台管理
+    ' =================================================
+
+    package "公告与后台管理" {
+
+        usecase "查看公告" as UC_ViewNotice
+
+        usecase "公告管理" as UC_ManageNotice
+
+        usecase "用户管理" as UC_UserManage
+
+        usecase "救助人员管理" as UC_RescuerManage
+
+        usecase "数据统计" as UC_Statistics
+    }
+}
+
+
+
+' =====================================================
+' VISITOR 未登录访客
+' =====================================================
+
+Visitor -- UC_Register
+
+Visitor -- UC_BrowseAnimal
+Visitor -- UC_FilterAnimal
+Visitor -- UC_AnimalDetail
+
+Visitor -- UC_ViewNotice
+
+
+
+' =====================================================
+' USER 普通用户
+' =====================================================
+
+User -- UC_Login
+User -- UC_Profile
+
+
+' 动物浏览与收藏
+
+User -- UC_BrowseAnimal
+User -- UC_FilterAnimal
+User -- UC_AnimalDetail
+
+User -- UC_Favorite
+User -- UC_Unfavorite
+User -- UC_ViewFavorites
+
+
+' 救助线索
+
+User -- UC_PublishClue
+User -- UC_ViewOwnClue
+User -- UC_EditClue
+User -- UC_WithdrawClue
+
+
+' 领养
+
+User -- UC_ApplyAdoption
+User -- UC_WithdrawApplication
+User -- UC_ViewApplication
+User -- UC_ViewOwnAdoption
+
+
+' 回访
+
+User -- UC_SubmitFollowUp
+User -- UC_ViewOwnFollowUp
+
+
+' 公告
+
+User -- UC_ViewNotice
+
+
+
+' =====================================================
+' RESCUER 救助人员
+' =====================================================
+
+Rescuer -- UC_Login
+Rescuer -- UC_Profile
+
+
+' 动物浏览与收藏
+
+Rescuer -- UC_BrowseAnimal
+Rescuer -- UC_FilterAnimal
+Rescuer -- UC_AnimalDetail
+
+Rescuer -- UC_Favorite
+Rescuer -- UC_Unfavorite
+Rescuer -- UC_ViewFavorites
+
+
+' 救助线索
+
+Rescuer -- UC_PublishClue
+Rescuer -- UC_ViewOwnClue
+Rescuer -- UC_EditClue
+Rescuer -- UC_WithdrawClue
+
+
+' 救助任务
+
+Rescuer -- UC_ViewWaiting
+Rescuer -- UC_AcceptTask
+Rescuer -- UC_UpdateTask
+Rescuer -- UC_RescueRecord
+
+
+' 动物档案
+
+Rescuer -- UC_CreateAnimal
+Rescuer -- UC_EditAnimal
+Rescuer -- UC_AddHealth
+Rescuer -- UC_ViewHealth
+Rescuer -- UC_ManageAnimalImage
+
+
+' 作为领养申请人
+
+Rescuer -- UC_ApplyAdoption
+Rescuer -- UC_WithdrawApplication
+Rescuer -- UC_ViewApplication
+Rescuer -- UC_ViewOwnAdoption
+
+Rescuer -- UC_SubmitFollowUp
+Rescuer -- UC_ViewOwnFollowUp
+
+
+' 作为救助负责人，只读查看相关数据
+
+Rescuer -- UC_ViewResponsibleAdoption
+Rescuer -- UC_ViewResponsibleFollowUp
+
+
+' 公告
+
+Rescuer -- UC_ViewNotice
+
+
+
+' =====================================================
+' ADMIN 系统管理员
+' =====================================================
+
+Admin -- UC_Login
+Admin -- UC_Profile
+
+
+' 公开动物信息
+
+Admin -- UC_BrowseAnimal
+Admin -- UC_FilterAnimal
+Admin -- UC_AnimalDetail
+
+
+' 救助线索审核
+
+Admin -- UC_AuditClue
+
+
+' 救助任务监管
+
+Admin -- UC_ManageTask
+Admin -- UC_HandleAbnormal
+
+
+' 动物档案管理
+' RESCUER：只能维护本人负责动物
+' ADMIN：可以维护全部动物
+
+Admin -- UC_EditAnimal
+Admin -- UC_AddHealth
+Admin -- UC_ViewHealth
+Admin -- UC_ManageAnimalImage
+
+
+' 领养管理
+
+Admin -- UC_AuditAdoption
+Admin -- UC_ManageAdoption
+
+
+' 回访监管
+
+Admin -- UC_AdminFollowUp
+
+
+' 公告与后台
+
+Admin -- UC_ViewNotice
+Admin -- UC_ManageNotice
+
+Admin -- UC_UserManage
+Admin -- UC_RescuerManage
+
+Admin -- UC_Statistics
+
+
+@enduml

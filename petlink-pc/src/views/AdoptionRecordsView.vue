@@ -1,0 +1,11 @@
+<template>
+  <PageHeader title="领养记录监管" subtitle="第八模块 · 领养记录属于只读事实数据"><el-button :loading="pager.loading.value" @click="load">刷新</el-button></PageHeader>
+  <ListError :message="pager.error.value" @retry="load"/>
+  <div class="card table-card"><el-table :data="pager.rows.value" v-loading="pager.loading.value" empty-text="暂无领养记录"><el-table-column prop="id" label="记录编号" width="100"/><el-table-column prop="applicationId" label="申请编号" width="110"/><el-table-column label="动物"><template #default="{row}">{{row.animal?.name||'—'}} #{{row.animalId}}</template></el-table-column><el-table-column prop="userId" label="领养人" width="120"/><el-table-column prop="adoptedAt" label="领养时间"/><el-table-column label="操作" width="120"><template #default="{row}"><el-button size="small" @click="open(row)">详情</el-button></template></el-table-column></el-table></div>
+  <el-pagination class="pager" background layout="sizes,prev,pager,next,total" :page-sizes="[10,20,50]" :total="pager.total.value" v-model:page-size="pager.size.value" v-model:current-page="pager.page.value" @size-change="changePageSize" @current-change="load"/>
+  <el-drawer v-model="drawer" title="领养记录详情" size="560px"><el-descriptions v-if="detail" :column="1" border><el-descriptions-item label="记录编号">{{detail.id}}</el-descriptions-item><el-descriptions-item label="申请编号">{{detail.applicationId}}</el-descriptions-item><el-descriptions-item label="动物">{{detail.animal?.name}} #{{detail.animalId}}</el-descriptions-item><el-descriptions-item label="领养人">#{{detail.userId}}</el-descriptions-item><el-descriptions-item label="领养时间">{{detail.adoptedAt}}</el-descriptions-item></el-descriptions></el-drawer>
+</template>
+<script setup>
+import{ref,onMounted}from'vue';import PageHeader from'../components/PageHeader.vue';import ListError from '../components/ListError.vue';import{adminApi,adoptionApi}from'../api/index.js';import{usePagination}from'../composables/usePagination.js'
+const pager=usePagination({pageSize:20}),drawer=ref(false),detail=ref(null);async function load(){await pager.load(({page,size})=>adminApi.adoptionRecords({page,size})).catch(()=>{})}function changePageSize(){pager.reset();load()}async function open(row){detail.value=await adoptionApi.record(row.id);drawer.value=true}onMounted(load)
+</script>

@@ -1,0 +1,126 @@
+@startuml
+title PetLink 领养业务主流程活动图
+
+skinparam shadowing false
+
+|USER / RESCUER|
+start
+:浏览 AVAILABLE 动物;
+:查看动物详情;
+:点击“申请领养”;
+:填写领养申请信息;
+
+if (取消填写？) then (是)
+  stop
+else (提交)
+endif
+
+:提交领养申请;
+
+|系统|
+:后端校验身份、角色和申请字段;
+:锁定目标 Animal;
+:确认 Animal = AVAILABLE;
+:校验用户未申请过该动物;
+:数据库唯一约束\n防止重复申请;
+:创建 AdoptionApplication;
+:status = PENDING;
+:写入申请创建日志;
+
+|USER / RESCUER|
+if (审核前主动撤回？) then (是)
+
+  :发起撤回申请;
+
+  |系统|
+  :条件更新 AdoptionApplication\nPENDING → WITHDRAWN;
+  stop
+
+else (否)
+
+  |系统|
+  if (同动物其他申请已先获批？) then (是)
+
+    :当前 AdoptionApplication\nPENDING → INVALIDATED;
+    :写入 AUTO_INVALIDATE 日志;
+    stop
+
+  else (否)
+
+    |ADMIN|
+    :审核当前 PENDING 申请;
+
+  endif
+
+endif
+
+if (审核结果？) then (拒绝)
+
+  |ADMIN|
+  :填写拒绝原因;
+
+  |系统|
+  :BEGIN 拒绝审核事务;
+  :锁定当前 AdoptionApplication;
+  :校验当前申请仍为 PENDING;
+  :校验审核人与申请人不同;
+  :AdoptionApplication\nPENDING → REJECTED;
+  :保存审核人、审核时间和拒绝原因;
+  :写入 AUDIT_REJECT 日志;
+  :COMMIT;
+
+  stop
+
+else (批准)
+
+  |系统|
+  :BEGIN 领养批准事务;
+  :按照 Animal → AdoptionApplication\n顺序锁定业务数据;
+  :校验 Animal = AVAILABLE;
+  :校验当前申请 = PENDING;
+  :校验审核人与申请人不同;
+
+  :当前 AdoptionApplication\nPENDING → APPROVED;
+  :创建 AdoptionRecord;
+  :Animal\nAVAILABLE → ADOPTED;
+
+  :锁定同动物其他 PENDING 申请;
+  :其他 PENDING 申请\n→ INVALIDATED;
+
+  :写入 APPROVE、ADOPTED\n及 AUTO_INVALIDATE 日志;
+  :COMMIT;
+
+  note right
+  上述批准步骤属于同一数据库事务，
+  任一步失败均整体回滚。
+  end note
+
+endif
+
+|USER / RESCUER|
+:查看本人 AdoptionRecord;
+
+note right
+后续回访可以相隔数天或数月，
+不是领养批准事务的一部分。
+end note
+
+while (后续需要提交回访？) is (是)
+
+  :填写回访信息;
+  :可上传生活照片;
+  :提交回访;
+
+  |系统|
+  :校验 AdoptionRecord.user_id\n= 当前登录用户;
+  :校验至少一项有效回访内容;
+  :校验临时图片所有权和有效性;
+  :创建 FollowUpRecord;
+  :创建 FollowUpImage（如有）;
+
+  |USER / RESCUER|
+
+endwhile (否)
+
+stop
+@enduml

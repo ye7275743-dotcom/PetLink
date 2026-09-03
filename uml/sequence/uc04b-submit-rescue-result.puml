@@ -1,0 +1,143 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-04（b）提交救助结果
+
+actor "RESCUER" as Rescuer
+participant "移动端\nUniApp" as App
+participant "RescueTaskController" as C
+participant "RescueTaskService" as S
+participant "RescueTaskMapper" as TM
+participant "RescueClueMapper" as CM
+participant "AnimalMapper" as AM
+participant "AnimalImageMapper" as AIM
+participant "HealthRecordMapper" as HRM
+participant "TemporaryFileMapper" as TFM
+participant "OperationLogMapper" as OLM
+participant "FileService" as FS
+database "MySQL" as DB
+
+note over App,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+Rescuer -> App : 提交救助结果
+App -> C : POST /api/rescue-tasks/{taskId}/result
+C -> S : submitResult(taskId, currentUserId, request)
+
+alt result = FAILED
+  S -> DB : BEGIN
+  S -> TM : conditional UPDATE\nWHERE id=taskId\nAND rescuer_id=currentUserId\nAND status=IN_PROGRESS\n→ FAILED + failureReason + finishedAt
+  TM -> DB : UPDATE
+  DB --> TM : affectedRows
+
+  alt affectedRows = 0
+    S -> TM : requery taskId
+    TM -> DB : SELECT
+    DB --> TM : row / none
+    S -> DB : ROLLBACK
+    S --> C : 40401 / 40901
+  else affectedRows = 1
+    S -> OLM : INSERT OperationLog\nRESCUE_TASK + RESCUE_FAILED\nIN_PROGRESS→FAILED\nreason=failureReason
+    OLM -> DB : INSERT
+
+    break 任一数据库写入或 OperationLog 写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : StateActionResponse
+    C --> App : 200 OK
+  end
+
+else result = SUCCESS
+  S -> DB : BEGIN
+
+  S -> TM : SELECT Task FOR UPDATE
+  TM -> DB : SELECT ... FOR UPDATE
+  DB --> TM : locked Task / none
+
+  alt Task不存在 / 非负责人
+    S -> DB : ROLLBACK
+    S --> C : 40401 RESOURCE_NOT_FOUND
+  else Task.status != IN_PROGRESS
+    S -> DB : ROLLBACK
+    S --> C : 40901 BUSINESS_STATE_CONFLICT
+  else Task合法
+    S -> S : clueId 仅从 locked Task.clue_id 获取
+
+    S -> CM : SELECT Clue FOR UPDATE
+    CM -> DB : SELECT ... FOR UPDATE
+    DB --> CM : locked Clue
+    S -> S : 校验 Clue.status=CONVERTED
+
+    S -> S : 校验 animals >=1\n全部 imageTokens 合计<=9\n全请求 token 不重复
+    S -> TFM : SELECT tokens\nORDER BY id ASC FOR UPDATE
+    TFM -> DB : SELECT ... FOR UPDATE
+    DB --> TFM : rows
+    S -> S : 校验 owner/status/expiry/type/size
+
+    loop 每个 Animal
+      S -> AM : INSERT Animal\nrescueTaskId=locked Task.id\nstatus=TREATING, version=0
+      AM -> DB : INSERT
+      DB --> AM : animalId
+
+      opt initialHealthRecord 非空
+        S -> HRM : INSERT HealthRecord\nrecorderId=currentUserId
+        HRM -> DB : INSERT
+      end
+
+      loop 该 Animal 的 imageTokens 客户端原顺序
+        S -> FS : generateFormalPath(ANIMAL)
+        FS --> S : formalPath
+
+        S -> AIM : INSERT AnimalImage\nsortOrder=1..N
+        AIM -> DB : INSERT
+
+        S -> TFM : UPDATE TemporaryFile\nBOUND + businessType=ANIMAL\nbusinessId=animalId + formalPath
+        TFM -> DB : conditional UPDATE
+        DB --> TFM : affectedRows=1
+      end
+    end
+
+    S -> TM : UPDATE Task\nIN_PROGRESS→SUCCESS\nfinishedAt
+    TM -> DB : UPDATE
+
+    S -> CM : UPDATE Clue\nCONVERTED→CLOSED
+    CM -> DB : UPDATE
+
+    S -> OLM : INSERT OperationLog\nRESCUE_TASK + COMPLETE_RESCUE\nIN_PROGRESS→SUCCESS
+    OLM -> DB : INSERT
+
+    S -> OLM : INSERT OperationLog\nRESCUE_CLUE + CLOSE_AFTER_RESCUE\nCONVERTED→CLOSED
+    OLM -> DB : INSERT
+
+    loop 所有图片
+      S -> FS : copy temp → formal
+      FS --> S : ok
+    end
+
+    break 任一数据库写入、OperationLog写入、文件校验或 formal copy 失败
+      S -> DB : ROLLBACK
+      S -> FS : 删除本事务新建正式副本\n保留原 temp
+      S --> C : 统一业务异常
+      C --> App : 4xx / 5xx
+    end
+
+    S -> DB : COMMIT
+    S -> FS : 删除原临时文件
+    FS --> S : done / deferred
+    S -> TFM : 安全删除 BOUND technical row
+    TFM -> DB : DELETE verified rows
+    DB --> TFM : done / deferred
+
+    S --> C : taskId + status=SUCCESS\n+ animalIds + finishedAt
+    C --> App : 200 OK
+  end
+end
+
+@enduml
+

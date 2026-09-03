@@ -1,0 +1,90 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-02 ADMIN 审核救助线索
+
+actor "ADMIN" as Admin
+participant "PC管理端\nVue3" as Web
+participant "RescueClueController" as C
+participant "RescueClueService" as S
+participant "RescueClueMapper" as CM
+participant "OperationLogMapper" as OLM
+database "MySQL" as DB
+
+note over Web,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+Admin -> Web : 提交审核
+Web -> C : POST /api/admin/rescue-clues/{clueId}/audit
+C -> S : audit(clueId, adminId, request)
+
+S -> S : 校验 decision\nAPPROVE 禁止 rejectReason\nREJECT 要求 reason 1~500
+S -> DB : BEGIN
+
+alt APPROVE
+  S -> CM : conditional UPDATE\nWHERE id=clueId\nAND status=PENDING_REVIEW\n→ WAITING_ACCEPT\n+ reviewerId/reviewedAt
+  CM -> DB : UPDATE
+  DB --> CM : affectedRows
+
+  alt affectedRows = 0
+    S -> CM : requery clueId
+    CM -> DB : SELECT
+    DB --> CM : row / none
+    alt 不存在
+      S -> DB : ROLLBACK
+      S --> C : 40401 RESOURCE_NOT_FOUND
+    else 状态已变化
+      S -> DB : ROLLBACK
+      S --> C : 40901 BUSINESS_STATE_CONFLICT
+    end
+  else affectedRows = 1
+    S -> OLM : INSERT OperationLog\nRESCUE_CLUE + AUDIT_APPROVE\nPENDING_REVIEW→WAITING_ACCEPT
+    OLM -> DB : INSERT
+
+    break 任一数据库写入或 OperationLog 写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : StateActionResponse
+  end
+
+else REJECT
+  S -> CM : conditional UPDATE\nWHERE id=clueId\nAND status=PENDING_REVIEW\n→ REJECTED\n+ reviewerId/reviewedAt/rejectReason
+  CM -> DB : UPDATE
+  DB --> CM : affectedRows
+
+  alt affectedRows = 0
+    S -> CM : requery clueId
+    CM -> DB : SELECT
+    DB --> CM : row / none
+    alt 不存在
+      S -> DB : ROLLBACK
+      S --> C : 40401 RESOURCE_NOT_FOUND
+    else 状态已变化
+      S -> DB : ROLLBACK
+      S --> C : 40901 BUSINESS_STATE_CONFLICT
+    end
+  else affectedRows = 1
+    S -> OLM : INSERT OperationLog\nRESCUE_CLUE + AUDIT_REJECT\nPENDING_REVIEW→REJECTED\nreason=rejectReason
+    OLM -> DB : INSERT
+
+    break 任一数据库写入或 OperationLog 写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : StateActionResponse
+  end
+end
+
+C --> Web : ApiResponse
+Web --> Admin : 展示最新状态
+
+@enduml
+

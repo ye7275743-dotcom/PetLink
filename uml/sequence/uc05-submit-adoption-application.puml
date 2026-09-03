@@ -1,0 +1,97 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-05 提交 / 撤回领养申请
+
+actor "USER / RESCUER" as Applicant
+participant "移动端\nUniApp" as App
+participant "AdoptionApplicationController" as C
+participant "AdoptionApplicationService" as S
+participant "AnimalMapper" as AM
+participant "AdoptionApplicationMapper" as AAM
+participant "OperationLogMapper" as OLM
+database "MySQL" as DB
+
+note over App,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+group 提交领养申请
+  Applicant -> App : 填写申请并提交
+  App -> C : POST /api/animals/{animalId}/adoption-applications
+  C -> S : createApplication(animalId, userId, dto)
+
+  S -> DB : BEGIN
+  S -> AM : SELECT Animal FOR UPDATE
+  AM -> DB : SELECT ... FOR UPDATE
+  DB --> AM : Animal / none
+
+  alt Animal不存在
+    S -> DB : ROLLBACK
+    S --> C : 40401 RESOURCE_NOT_FOUND
+  else Animal.status != AVAILABLE
+    S -> DB : ROLLBACK
+    S --> C : 40901 BUSINESS_STATE_CONFLICT
+  else AVAILABLE
+    S -> AAM : INSERT AdoptionApplication\nuserId=current user\nstatus=PENDING
+    AAM -> DB : INSERT
+
+    alt 命中 uk_adoption_application_user_animal
+      S -> DB : ROLLBACK
+      S --> C : 40907 ADOPTION_APPLICATION_ALREADY_EXISTS
+    else 插入成功
+      S -> OLM : INSERT OperationLog\nADOPTION_APPLICATION + CREATE\nNULL→PENDING
+      OLM -> DB : INSERT
+
+      break 任一数据库写入或 OperationLog 写入失败
+        S -> DB : ROLLBACK
+        S --> C : 统一业务异常
+      end
+
+      S -> DB : COMMIT
+      S --> C : AdoptionApplicationDetailResponse
+      C --> App : 201 Created
+    end
+  end
+end
+
+opt 后续撤回本人 PENDING 申请（独立请求）
+  Applicant -> App : 点击撤回
+  App -> C : POST /api/adoption-applications/{applicationId}/withdraw
+  C -> S : withdraw(applicationId, userId)
+
+  S -> DB : BEGIN
+  S -> AAM : conditional UPDATE\nWHERE id=applicationId\nAND user_id=current user\nAND status=PENDING\n→ WITHDRAWN
+  AAM -> DB : UPDATE
+  DB --> AAM : affectedRows
+
+  alt affectedRows = 0
+    S -> AAM : requery applicationId
+    AAM -> DB : SELECT
+    DB --> AAM : row / none
+    alt 不存在 / 非本人
+      S -> DB : ROLLBACK
+      S --> C : 40401 RESOURCE_NOT_FOUND
+    else 状态已变化
+      S -> DB : ROLLBACK
+      S --> C : 40901 BUSINESS_STATE_CONFLICT
+    end
+  else affectedRows = 1
+    S -> OLM : INSERT OperationLog\nADOPTION_APPLICATION + WITHDRAW\nPENDING→WITHDRAWN
+    OLM -> DB : INSERT
+
+    break 任一数据库写入或 OperationLog 写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : StateActionResponse
+    C --> App : 200 OK
+  end
+end
+
+@enduml
+

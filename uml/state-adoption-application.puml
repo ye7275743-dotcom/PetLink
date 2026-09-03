@@ -1,0 +1,40 @@
+@startuml
+title AdoptionApplication 领养申请状态图
+
+skinparam shadowing false
+
+[*] --> PENDING : USER / RESCUER 提交申请\n/ 系统创建 AdoptionApplication
+
+PENDING --> WITHDRAWN : 申请人发起撤回\n[仅本人 PENDING 申请]\n/ 系统条件更新状态
+
+PENDING --> REJECTED : ADMIN 拒绝申请\n[拒绝原因必填]\n/ 系统执行审核更新
+
+PENDING --> APPROVED : ADMIN 批准申请\n/ 系统执行领养批准事务
+
+PENDING --> INVALIDATED : 同动物其他申请被批准\n/ 系统自动将本申请置为 INVALIDATED
+
+APPROVED --> [*]
+REJECTED --> [*]
+WITHDRAWN --> [*]
+INVALIDATED --> [*]
+
+note right of APPROVED
+APPROVED 不是 ADMIN 直接修改状态。
+
+ADMIN 发起批准后，
+由系统在同一事务中完成：
+- 当前申请 APPROVED
+- 创建 AdoptionRecord
+- Animal → ADOPTED
+- 其他 PENDING → INVALIDATED
+end note
+
+note right of INVALIDATED
+INVALIDATED 不表示申请本身不合格。
+
+它表示：
+同一动物的其他申请已经被批准，
+因此本申请由系统自动失效。
+end note
+
+@enduml

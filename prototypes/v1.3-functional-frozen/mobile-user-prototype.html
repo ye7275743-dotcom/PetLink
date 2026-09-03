@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PetLink 移动端功能原型 V1.3</title>
+<style>
+:root{--bg:#eef1f4;--panel:#fff;--text:#1f2329;--muted:#667085;--line:#e5e7eb;--dark:#111827;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+.phone{width:390px;min-height:844px;margin:24px auto;background:#fff;border:10px solid #111;border-radius:34px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.15);position:relative}
+.status{height:28px;background:#111;color:#fff;font-size:11px;padding:7px 14px;display:flex;justify-content:space-between}
+.header{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.logo{font-size:20px;font-weight:800}.role{font-size:11px;background:#f1f5f9;border-radius:999px;padding:5px 8px}
+.content{padding:14px 14px 76px;min-height:720px;background:#fafafa}.page{display:none}.page.active{display:block}
+.banner{background:#111827;color:#fff;border-radius:14px;padding:18px;margin-bottom:12px}.banner h2{margin:0 0 6px;font-size:18px}.banner p{margin:0;color:#d1d5db;font-size:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.row{display:flex;gap:10px}.thumb{width:92px;height:74px;border-radius:10px;background:linear-gradient(135deg,#dbeafe,#e5e7eb);display:flex;align-items:center;justify-content:center;font-size:28px}.meta{flex:1}.meta h3{margin:2px 0 5px;font-size:15px}.muted{color:var(--muted);font-size:12px}.badge{display:inline-block;font-size:10px;padding:3px 7px;border-radius:999px;background:#eef2ff;margin-top:6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 11px;font-size:12px;cursor:pointer}.btn.primary{background:#111827;color:#fff;border-color:#111827}.btn.danger{color:var(--danger)}
+.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fff;margin:5px 0 10px}textarea{min-height:82px}label{font-size:12px;color:#475467}
+.bottom{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:7px 4px 10px}.bottom button{border:0;background:transparent;font-size:11px;color:#667085;padding:7px 2px}.bottom button.active{color:#111827;font-weight:700}.bottom button[hidden]{display:none}
+.list-title{font-weight:700;font-size:14px;margin:12px 2px 6px}.switcher{display:flex;gap:6px}.switcher button{font-size:11px}.back{margin-bottom:8px}.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.tabs button.active{background:#111827;color:#fff}.notice{padding:9px 10px;border-radius:9px;background:#f8fafc;color:#475467;font-size:12px;margin:8px 0}.conflict{display:none;padding:9px 10px;border-radius:9px;background:#fef3f2;color:#b42318;font-size:12px;margin-top:8px}
+@media(max-width:430px){body{background:#fff}.phone{width:100%;min-height:100vh;margin:0;border:0;border-radius:0;box-shadow:none}.status{display:none}.content{min-height:calc(100vh - 120px)}.bottom{position:fixed}}
+
+.statusline{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:8px 0}
+.divider{height:1px;background:var(--line);margin:12px 0}
+.kv{display:grid;grid-template-columns:92px 1fr;gap:8px;font-size:12px;margin:7px 0}
+.kv b{color:#475467}
+.mini-imgs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0}
+.mini-img{height:70px;border:1px dashed #cbd5e1;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#f8fafc}
+.toast{position:absolute;left:20px;right:20px;bottom:82px;background:#111827;color:#fff;border-radius:10px;padding:11px 12px;font-size:12px;display:none;z-index:20}
+.dangerbox{background:#fef3f2;color:#b42318;border:1px solid #fecdca;border-radius:9px;padding:9px;font-size:12px}
+.successbox{background:#ecfdf3;color:#027a48;border:1px solid #abefc6;border-radius:9px;padding:9px;font-size:12px}
+@media(max-width:430px){.toast{position:fixed}}
+
+.file-help{font-size:11px;color:#667085;line-height:1.55;margin:-3px 0 9px}
+.file-box{border:1px dashed #cbd5e1;border-radius:10px;padding:12px;background:#f8fafc;margin:6px 0 5px}
+.guest-note{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:9px;padding:9px;font-size:12px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="phone">
+<div class="status"><span>17:31</span><span>PetLink</span><span>5G · 86%</span></div>
+<div class="header"><div class="logo">PetLink</div><div class="switcher"><button class="btn" id="roleBtn">角色：USER</button></div></div>
+<div class="content">
+  <section id="home" class="page active">
+    <div class="banner"><h2>给流浪动物一个新家</h2><p>公开区域仅展示 AVAILABLE 动物。</p></div>
+    <div class="list-title">筛选动物</div>
+    <div class="filters"><select><option>全部物种</option><option>CAT</option><option>DOG</option></select><select><option>全部性别</option><option>MALE</option><option>FEMALE</option><option>UNKNOWN</option></select></div>
+    <div class="list-title">开放领养</div>
+    <div class="card row"><div class="thumb">🐈</div><div class="meta"><h3>橘子</h3><div class="muted">CAT · 约14个月 · 橘白</div><div class="muted">恢复良好</div><span class="badge">AVAILABLE</span><div class="actions"><button class="btn" data-goto="animal">查看详情</button><button id="homeFavoriteBtn" class="btn" data-favorite-toggle>收藏</button></div></div></div>
+    <div class="card row"><div class="thumb">🐕</div><div class="meta"><h3>豆包</h3><div class="muted">DOG · 约20个月 · 黑白</div><div class="muted">状态稳定</div><span class="badge">AVAILABLE</span></div></div>
+  </section>
+
+  <section id="animal" class="page secondary"><button class="btn back" data-back>← 返回</button><div class="card"><div class="thumb" style="width:100%;height:180px;font-size:64px">🐈</div><h2 style="margin-bottom:4px">橘子</h2><div class="muted">CAT · MALE · 约14个月 · 橘白</div><p>后腿外伤已恢复，目前精神与食欲正常。</p><div class="list-title">健康记录</div><div class="muted">08-26 已完成复查，伤口恢复良好。</div><div class="actions"><button class="btn" data-toast="收藏状态已切换（示意）">收藏</button><button id="animalApplyBtn" class="btn primary" data-apply-entry>申请领养</button></div></div></section>
+
+  <section id="clue" class="page">
+    <div class="tabs"><button class="btn active" data-clue-tab="publish">发布线索</button><button class="btn" data-clue-tab="mine">我的线索</button></div>
+    <div id="cluePublish"><div class="card"><label>发现地点</label><input class="input" value="南京市玄武区某路口"/><label>发现时间</label><input class="input" value="2026-08-29 17:20"/><label>动物描述</label><textarea>一只受伤的橘猫，行动缓慢</textarea><label>现场情况</label><textarea>靠近绿化带，暂未离开</textarea><label>联系方式</label><input class="input" value="13800138000"/><label>图片</label>
+<div class="file-box">＋ 添加现场图片（1～9 张）</div>
+<div class="file-help">支持 JPG / JPEG / PNG；单张 ≤ 5MB；本次最多 9 张。</div>
+<div class="actions"><button class="btn" data-file-error>模拟错误文件</button></div>
+<button class="btn primary" style="width:100%" data-toast="线索已提交，状态=PENDING_REVIEW（示意）">提交线索</button></div></div>
+    <div id="clueMine" style="display:none"><div class="card"><b>线索 #3008</b><div class="muted">南京市玄武区某路口 · 08-29 17:20</div><span class="badge">PENDING_REVIEW</span><div class="actions"><button class="btn" data-goto="clueEdit">修改</button><button class="btn danger" data-toast="线索已撤回（示意）">撤回</button></div></div><div class="card"><b>线索 #3002</b><div class="muted">秦淮区某公园</div><span class="badge">WAITING_ACCEPT</span><div class="notice">审核已通过，等待救助人员接取。</div></div></div>
+  </section>
+
+  <section id="clueEdit" class="page secondary">
+    <button class="btn back" data-back>← 返回我的线索</button>
+    <div class="list-title">修改待审核线索 #3008</div>
+    <div class="card">
+      <label>发现地点</label><input class="input" value="南京市玄武区某路口"/>
+      <label>动物描述</label><textarea>一只受伤橘猫，后腿疑似外伤</textarea>
+      <label>现场情况</label><textarea>靠近绿化带</textarea>
+      <label>联系方式</label><input class="input" value="13800138000"/>
+      <div class="list-title">现场图片</div>
+      <div id="clueEditImages" class="mini-imgs">
+        <div class="mini-img" data-clue-edit-image>🐈</div>
+        <div class="mini-img" data-clue-edit-image>📍</div>
+      </div>
+      <div class="file-help">支持 JPG / JPEG / PNG；单张 ≤ 5MB；总数最多 9 张；至少保留 1 张。</div>
+      <div class="actions">
+        <button class="btn" data-clue-image-add>添加图片</button>
+        <button class="btn danger" data-clue-image-delete>删除最后一张</button>
+        <button class="btn" data-file-error>模拟错误文件</button>
+      </div>
+      <button class="btn primary" style="width:100%;margin-top:8px" data-toast="线索修改已保存（示意）">保存修改</button>
+    </div>
+  </section>
+
+  <section id="tasks" class="page">
+    <div class="list-title">等待接取 · UC-03</div>
+    <div class="card"><b>线索 #3010</b><div class="muted">玄武区某路口 · 发现受伤幼猫</div><span class="badge">WAITING_ACCEPT</span><div class="actions"><button class="btn" data-goto="waitingClue">查看详情</button><button class="btn primary" data-accept>接取任务</button></div><div id="acceptConflict" class="conflict">40901：该线索已被其他救助人员接取，请刷新列表。</div></div>
+
+    <div class="list-title">我的救助任务 · UC-04</div>
+    <div class="card"><div><b>任务 #4012</b> <span class="badge">WAITING_START</span></div><div class="muted">秦淮区某公园 · 流浪犬</div><div class="actions"><button class="btn primary" data-goto="taskWaitingStart">任务详情 / 开始救助</button></div></div>
+    <div class="card"><div><b>任务 #4001</b> <span class="badge">IN_PROGRESS</span></div><div class="muted">玄武区某路口 · 橘猫外伤</div><div class="actions"><button class="btn primary" data-goto="taskProgress">任务详情</button></div></div>
+
+    <div class="list-title">负责动物</div>
+    <div class="card"><div class="muted">仅 RESCUER 可查看由本人 RescueTask 创建的 Animal。</div><div class="actions"><button class="btn" data-goto="responsibleAnimals">我负责的动物</button><button class="btn" data-goto="rescuerFollowups">负责动物回访</button></div></div>
+  </section>
+
+  <section id="waitingClue" class="page secondary"><button class="btn back" data-back>← 返回等待接取</button><div class="card"><h3>WAITING_ACCEPT 线索 #3010</h3><div class="muted">发现时间：2026-08-29 17:05</div><p><b>地点：</b>玄武区某路口</p><p><b>描述：</b>幼猫后腿受伤，躲在绿化带附近。</p><p><b>联系方式：</b>138****8000</p><div class="thumb" style="width:100%;height:150px">🐈</div><button class="btn primary" style="width:100%;margin-top:10px" data-accept>接取任务</button></div></section>
+
+  
+  <section id="taskWaitingStart" class="page secondary">
+    <button class="btn back" data-back>← 返回救助任务</button>
+    <div class="list-title">任务详情 #4012</div>
+    <div class="card">
+      <div class="statusline"><b>秦淮区某公园</b><span class="badge">WAITING_START</span></div>
+      <div class="kv"><b>来源线索</b><span>#3022</span></div>
+      <div class="kv"><b>动物描述</b><span>中型流浪犬，前爪轻微擦伤</span></div>
+      <div class="kv"><b>接取时间</b><span>2026-08-29 17:15</span></div>
+      <div class="notice">只有任务负责人可以执行 WAITING_START → IN_PROGRESS。</div>
+      <button class="btn primary" style="width:100%" data-start-task>开始救助</button>
+    </div>
+  </section>
+
+  <section id="taskProgress" class="page secondary">
+    <button class="btn back" data-back>← 返回救助任务</button>
+    <div class="list-title">任务详情 #4001</div>
+    <div class="card">
+      <div class="statusline"><b>玄武区某路口</b><span class="badge">IN_PROGRESS</span></div>
+      <div class="kv"><b>开始时间</b><span>2026-08-29 16:25</span></div>
+      <div class="list-title">历史救助记录</div>
+      <div class="notice">16:30 已到达现场，正在联系附近宠物医院。</div>
+      <div class="notice">16:48 已完成简单止血，准备转运。</div>
+      <div class="actions"><button class="btn" data-goto="addRescueRecord">追加救助记录</button><button class="btn primary" data-goto="submitRescueResult">提交救助结果</button></div>
+    </div>
+  </section>
+
+  <section id="addRescueRecord" class="page secondary">
+    <button class="btn back" data-back>← 返回任务详情</button>
+    <div class="list-title">追加救助记录</div>
+    <div class="card"><label>过程记录</label><textarea>已到达宠物医院，医生正在进行检查。</textarea><button class="btn primary" style="width:100%" data-toast="救助记录已追加（示意）">保存记录</button></div>
+  </section>
+
+  <section id="submitRescueResult" class="page secondary">
+    <button class="btn back" data-back>← 返回任务详情</button>
+    <div class="list-title">提交救助结果 · UC-04</div>
+    <div class="tabs"><button class="btn active" data-result-tab="success">SUCCESS</button><button class="btn" data-result-tab="failed">FAILED</button></div>
+
+    <div id="resultSuccess">
+      <div class="card">
+        <div class="notice">SUCCESS 必须至少创建 1 个 Animal；本次所有 Animal 图片合计最多 9 张。</div>
+        <div class="list-title">Animal #1 建档</div>
+        <label>名称</label><input class="input" value="橘子"/>
+        <div class="filters"><div><label>物种</label><input class="input" value="CAT"/></div><div><label>性别</label><select><option>MALE</option><option>FEMALE</option><option>UNKNOWN</option></select></div></div>
+        <label>估算年龄（月）</label><input class="input" value="14"/>
+        <label>毛色</label><input class="input" value="橘白"/>
+        <label>当前健康情况</label><textarea>后腿外伤，已完成初步处理。</textarea>
+        <label>初始健康记录（可选）</label><textarea>已清创并完成包扎，建议三天后复查。</textarea>
+        <label>动物图片</label><div class="mini-imgs"><div class="mini-img">＋</div><div class="mini-img">🐈</div><div class="mini-img">🐈</div></div>
+<div class="file-help">支持 JPG / JPEG / PNG；单张 ≤ 5MB；本次 SUCCESS 中所有 Animal 图片合计最多 9 张。</div>
+<button class="btn" data-file-error>模拟错误文件</button>
+        <div id="extraAnimals"></div><button class="btn" style="width:100%" data-add-animal>＋ 再添加一个 Animal</button>
+        <button class="btn primary" style="width:100%;margin-top:8px" data-toast="SUCCESS 已提交：创建 Animal 并关闭线索（示意）">确认成功并建档</button>
+      </div>
+    </div>
+
+    <div id="resultFailed" style="display:none">
+      <div class="card"><label>失败原因</label><textarea>动物受到惊吓后逃离现场，多次寻找未果。</textarea><div class="notice">FAILED 后 RescueClue 保持 CONVERTED，等待 ADMIN 后续 REOPEN / CLOSE。</div><button class="btn danger" style="width:100%" data-toast="FAILED 结果已提交（示意）">提交失败结果</button></div>
+    </div>
+  </section>
+
+  <section id="responsibleAnimals" class="page secondary">
+    <button class="btn back" data-back>← 返回救助</button>
+    <div class="list-title">我负责的动物 · M04</div>
+    <div class="card row"><div class="thumb">🐈</div><div class="meta"><h3>橘子</h3><div class="muted">来源任务 #4001</div><span class="badge">TREATING</span><div class="actions"><button class="btn primary" data-goto="animalManage">管理档案</button><button class="btn" data-goto="adoptionOverview">领养情况</button></div></div></div>
+    <div class="card row"><div class="thumb">🐕</div><div class="meta"><h3>豆包</h3><div class="muted">来源任务 #3988</div><span class="badge">AVAILABLE</span><div class="actions"><button class="btn primary" data-goto="animalManage">管理档案</button><button class="btn" data-goto="adoptionOverview">领养情况</button></div></div></div>
+  </section>
+
+  <section id="animalManage" class="page secondary">
+    <button class="btn back" data-back>← 返回负责动物</button>
+    <div class="list-title">动物档案管理 · M04</div>
+    <div class="card">
+      <div class="statusline"><b>橘子 #5001</b><span class="badge">TREATING</span></div>
+      <label>名称</label><input class="input" value="橘子"/>
+      <div class="filters"><input class="input" value="CAT"/><select><option>MALE</option><option>FEMALE</option><option>UNKNOWN</option></select></div>
+      <label>当前健康摘要</label><textarea>后腿伤口恢复中。</textarea>
+      <button class="btn primary" style="width:100%" data-toast="基本资料已保存（示意）">保存基本资料</button>
+      <div class="divider"></div>
+      <div class="list-title">动物图片</div>
+      <div class="mini-imgs"><div class="mini-img">🐈</div><div class="mini-img">🐈</div><div class="mini-img">＋</div></div>
+      <div class="file-help">支持 JPG / JPEG / PNG；单张 ≤ 5MB；单次新增最多 9 张。</div>
+      <div class="actions"><button class="btn" data-toast="动物图片已添加（示意）">添加图片</button><button class="btn danger" data-toast="选中动物图片已删除（示意）">删除选中图片</button><button class="btn" data-file-error>模拟错误文件</button></div>
+      <div class="divider"></div>
+      <div class="list-title">健康记录</div>
+      <div class="notice">08-29 17:10 · 已清创并完成包扎。</div>
+      <textarea placeholder="新增健康记录"></textarea><button class="btn" data-toast="健康记录已追加（示意）">添加健康记录</button>
+      <div class="divider"></div>
+      <div class="list-title">合法状态操作</div>
+      <div class="statusline"><span class="muted">当前状态</span><span id="mobileAnimalStatus" class="badge">TREATING</span></div>
+      <div id="mobileAnimalAction" class="actions"><button class="btn primary" data-mobile-animal-action data-next="OBSERVING">进入观察</button></div>
+      <div class="muted">仅展示当前状态允许的操作；ADOPTED 只能由 M05 审核批准事务产生。</div>
+    </div>
+  </section>
+
+  <section id="applicationDetail" class="page secondary">
+    <button class="btn back" data-back>← 返回我的申请</button>
+    <div class="list-title">领养申请详情 · M05</div>
+    <div class="card">
+      <div class="statusline"><b>申请 #6008 · 豆包</b><span class="badge">PENDING</span></div>
+      <div class="kv"><b>领养理由</b><span>希望长期照顾，并承担日常与医疗费用。</span></div>
+      <div class="kv"><b>住房条件</b><span>自有住房，可养宠。</span></div>
+      <div class="kv"><b>家庭成员</b><span>3 人，家人均同意。</span></div>
+      <div class="kv"><b>养宠经验</b><span>曾养猫 5 年，有基础护理经验。</span></div>
+      <div class="kv"><b>联系方式</b><span>13800138000</span></div>
+      <div class="notice">当前等待 ADMIN 审核，可撤回。</div>
+    </div>
+  </section>
+
+  <section id="applicationRejected" class="page secondary">
+    <button class="btn back" data-back>← 返回我的申请</button>
+    <div class="card"><b>申请 #5992</b><span class="badge">REJECTED</span><div class="dangerbox">驳回原因：居住条件暂不适合该动物。</div></div>
+  </section>
+
+  <section id="applicationInvalidated" class="page secondary">
+    <button class="btn back" data-back>← 返回我的申请</button>
+    <div class="card"><b>申请 #5980</b><span class="badge">INVALIDATED</span><div class="notice">该动物的其他领养申请已获批准，因此本申请由系统自动失效。</div></div>
+  </section>
+
+  <section id="adoptionOverview" class="page secondary">
+    <button class="btn back" data-back>← 返回负责动物</button>
+    <div class="list-title">负责动物领养概览 · 只读</div>
+    <div class="card"><div class="kv"><b>动物</b><span>橘子 #5001</span></div><div class="kv"><b>当前状态</b><span>AVAILABLE</span></div><div class="kv"><b>待审核申请</b><span>3</span></div><div class="kv"><b>领养记录</b><span>暂无</span></div><div class="notice">不展示其他申请人的理由、住房、家庭、养宠经验和联系方式。</div></div>
+  </section>
+
+  <section id="followupHistory" class="page secondary">
+    <button class="btn back" data-back>← 返回领养记录</button>
+    <div class="list-title">历史回访</div>
+    <div class="card"><b>回访 #8001</b><div class="muted">2026-08-20</div><p>已经逐渐适应新家。</p><button class="btn" data-goto="followupDetail">查看详情</button></div>
+    <div class="card"><b>回访 #8015</b><div class="muted">2026-08-27</div><p>食欲和精神状态正常。</p><button class="btn" data-goto="followupDetail">查看详情</button></div>
+  </section>
+
+  <section id="followupDetail" class="page secondary">
+    <button class="btn back" data-back>← 返回历史回访</button>
+    <div class="card"><h3>回访 #8015</h3><p><b>近况：</b>已经完全适应新家，会主动亲近家人。</p><p><b>健康：</b>精神和食欲正常。</p><div class="mini-imgs"><div class="mini-img">🐈</div><div class="mini-img">🏠</div></div></div>
+  </section>
+
+  <section id="rescuerFollowups" class="page secondary">
+    <button class="btn back" data-back>← 返回救助</button>
+    <div class="list-title">负责动物回访 · RESCUER 只读</div>
+    <div class="card"><b>橘子 · 回访 #8015</b><div class="muted">领养后状态良好</div><button class="btn" data-goto="followupDetail">查看回访详情</button></div>
+  </section>
+
+<section id="apply" class="page secondary"><button class="btn back" data-back>← 返回动物详情</button><div class="list-title">领养申请 · 橘子</div><div class="card"><label>领养理由</label><textarea>希望长期照顾它，并能承担医疗与生活费用。</textarea><label>住房条件</label><textarea>自有住房，可养宠。</textarea><label>家庭成员</label><input class="input" value="3人，家人均同意"/><label>养宠经验</label><textarea>曾养猫5年。</textarea><label>联系方式</label><input class="input" value="13800138000"/><button class="btn primary" style="width:100%" data-toast="领养申请已提交（示意）">提交申请</button></div></section>
+
+  <section id="records" class="page">
+    <div class="list-title">我的领养与回访</div>
+    <div class="card"><div class="row"><div class="thumb">🐈</div><div class="meta"><h3>橘子</h3><div class="muted">领养记录 #7001</div><span class="badge">已领养</span></div></div><div class="actions"><button class="btn" data-goto="followupHistory">历史回访</button><button class="btn primary" data-goto="followup">提交回访</button></div></div>
+    <div class="list-title">我的申请</div>
+    <div class="card"><b>申请 #6008 · 豆包</b><span class="badge">PENDING</span><div class="actions"><button class="btn" data-goto="applicationDetail">详情</button><button class="btn" data-toast="领养申请已撤回（示意）">撤回申请</button></div></div>
+    <div class="card"><b>申请 #5992 · 小灰</b><span class="badge">REJECTED</span><div class="actions"><button class="btn" data-goto="applicationRejected">查看驳回原因</button></div></div>
+    <div class="card"><b>申请 #5980 · 小白</b><span class="badge">INVALIDATED</span><div class="actions"><button class="btn" data-goto="applicationInvalidated">查看说明</button></div></div>
+  </section>
+
+  <section id="followup" class="page secondary">
+    <button class="btn back" data-back>← 返回领养记录</button>
+    <div class="list-title">提交回访 · 橘子</div>
+    <div class="card">
+      <label>近况</label><textarea id="followupContent">已经完全适应新家，会主动亲近家人。</textarea>
+      <label>健康情况</label><textarea id="followupHealth">精神和食欲正常。</textarea>
+      <label>图片</label>
+      <div id="followupImageBox" class="file-box">＋ 添加回访图片（0～9 张）</div>
+      <div class="file-help">支持 JPG / JPEG / PNG；单张 ≤ 5MB；本次最多 9 张。近况、健康情况、有效图片至少存在一项。</div>
+      <div class="actions"><button class="btn" data-followup-image-toggle>添加一张示例图片</button><button class="btn" data-file-error>模拟错误文件</button></div>
+      <button class="btn primary" style="width:100%;margin-top:8px" data-followup-submit>提交回访</button>
+    </div>
+  </section>
+
+  <section id="favorites" class="page secondary"><button class="btn back" data-back>← 返回我的</button><div class="list-title">我的收藏</div><div id="favoriteCardBean" class="card row"><div class="thumb">🐕</div><div class="meta"><h3>豆包</h3><div class="muted">AVAILABLE</div><div class="actions"><button class="btn" data-unfavorite-card>取消收藏</button></div></div></div><div class="card row"><div class="thumb">—</div><div class="meta"><h3>小白</h3><div class="muted">ADOPTED · 当前无图片访问权限</div><div class="muted">coverImageUrl = null</div></div></div></section>
+
+  <section id="announcements" class="page secondary"><button class="btn back" data-back>← 返回我的</button><div class="list-title">公告</div><div class="card"><b>周末流浪动物义诊活动</b><div class="muted">08-29 17:00</div><p style="font-size:13px">本周末将开展流浪动物义诊活动……</p><button class="btn" data-goto="announcementDetail">查看详情</button></div></section>
+
+  <section id="announcementDetail" class="page secondary"><button class="btn back" data-back>← 返回公告</button><div class="card"><h3>周末流浪动物义诊活动</h3><div class="muted">2026-08-29 17:00</div><p>本周末将在指定社区开展流浪动物基础检查、伤口处理与救助知识宣传，欢迎有需要的市民关注。</p></div></section>
+
+  <section id="profile" class="page"><div class="card">
+      <h3 id="profileName">小明</h3>
+      <div class="muted"><span id="profileAccount">petlink_user01</span> · <span id="profileRole">USER</span></div>
+      <div id="guestProfileNote" class="guest-note" style="display:none;margin-top:8px">VISITOR 仅可浏览公开动物、动物详情与已发布公告；收藏、领养申请、发布线索等操作需先登录。</div>
+    </div><div class="card"><button class="btn" style="width:100%;margin-bottom:8px" data-goto="profileEdit">编辑资料</button><button id="responsibleAnimalsBtn" class="btn" style="width:100%;margin-bottom:8px;display:none" data-goto="responsibleAnimals">我负责的动物</button><button class="btn" style="width:100%;margin-bottom:8px" data-goto="records">我的申请 / 领养记录</button><button class="btn" style="width:100%;margin-bottom:8px" data-goto="favorites">我的收藏</button><button class="btn" style="width:100%;margin-bottom:8px" data-goto="announcements">公告</button><button class="btn" style="width:100%;margin-bottom:8px" data-goto="login">登录页面</button><button class="btn" style="width:100%" data-goto="register">注册页面</button></div></section>
+
+  <section id="profileEdit" class="page secondary"><button class="btn back" data-back>← 返回我的</button><div class="list-title">编辑个人资料</div><div class="card"><label>昵称</label><input class="input" value="小明"/><label>手机号</label><input class="input" value="13800138000"/><div class="notice">roleCode / status 等受保护字段不可由此页面修改。</div><button id="saveProfileBtn" class="btn primary" style="width:100%" data-save-profile>保存资料</button></div></section>
+
+  <section id="login" class="page secondary"><button class="btn back" data-back>← 返回</button><div class="list-title">登录</div><div class="card"><label>账号</label><input class="input" placeholder="请输入账号"/><label>密码</label><input class="input" type="password" placeholder="8～64字符"/><button id="loginSubmitBtn" class="btn primary" style="width:100%" data-login-submit>登录</button><div class="actions"><button class="btn" data-goto="register">没有账号？注册</button></div></div></section>
+
+  <section id="register" class="page secondary"><button class="btn back" data-back>← 返回</button><div class="list-title">注册</div><div class="card"><label>账号</label><input class="input"/><label>密码</label><input class="input" type="password"/><label>昵称</label><input class="input"/><label>手机号（可选）</label><input class="input"/><div class="notice">公开注册固定创建 USER，不允许自行注册为 RESCUER / ADMIN。</div><button id="registerSubmitBtn" class="btn primary" style="width:100%" data-register-submit>创建账号</button></div></section>
+</div>
+
+<div id="toast" class="toast"></div><div class="bottom"><button class="active" data-tab="home">首页</button><button data-tab="clue">线索</button><button id="taskTab" data-tab="tasks" hidden>救助</button><button data-tab="records">领养</button><button data-tab="profile">我的</button></div>
+</div>
+<script>
+let role='USER';let current='home';const historyStack=[];let applicationSubmitted=false;let homeFavorited=false;let followupHasImage=false;
+const rescuerOnlyPages=new Set([
+  'tasks','waitingClue','taskWaitingStart','taskProgress','addRescueRecord',
+  'submitRescueResult','responsibleAnimals','animalManage','adoptionOverview','rescuerFollowups'
+]);
+const loginRequiredPages=new Set([
+  'clue','clueEdit','tasks','waitingClue','taskWaitingStart','taskProgress','addRescueRecord',
+  'submitRescueResult','responsibleAnimals','animalManage','adoptionOverview','rescuerFollowups',
+  'apply','records','followup','followupHistory','followupDetail','favorites','profileEdit',
+  'applicationDetail','applicationRejected','applicationInvalidated'
+]);
+function isRescuer(){return role==='RESCUER'}
+function isVisitor(){return role==='VISITOR'}
+function syncRoleUI(){
+  document.getElementById('roleBtn').textContent='角色：'+role;
+  document.getElementById('profileRole').textContent=role;
+  document.getElementById('taskTab').hidden=!isRescuer();
+  const responsibleBtn=document.getElementById('responsibleAnimalsBtn');
+  if(responsibleBtn) responsibleBtn.style.display=isRescuer()?'block':'none';
+  document.getElementById('guestProfileNote').style.display=isVisitor()?'block':'none';
+  document.getElementById('profileName').textContent=isVisitor()?'游客':'小明';
+  document.getElementById('profileAccount').textContent=isVisitor()?'未登录':'petlink_user01';
+}
+function show(id,push=true){
+  if(isVisitor()&&loginRequiredPages.has(id)){
+    showToast('该功能需要登录，已跳转登录页');
+    id='login';
+  }
+  if(rescuerOnlyPages.has(id)&&!isRescuer()&&!isVisitor()){
+    showToast('当前 USER 无权访问 RESCUER 专属页面');
+    id='home';
+  }
+  if(push&&current!==id)historyStack.push(current);
+  current=id;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  (document.getElementById(id)||document.getElementById('home')).classList.add('active');
+  document.querySelectorAll('.bottom button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>show(b.dataset.goto));
+document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{const prev=historyStack.pop()||'home';show(prev,false)});
+document.getElementById('roleBtn').onclick=()=>{
+  role = role==='USER' ? 'RESCUER' : (role==='RESCUER' ? 'VISITOR' : 'USER');
+  syncRoleUI();
+  if(role==='USER'&&rescuerOnlyPages.has(current)){
+    historyStack.length=0; show('home',false); showToast('已切换为 USER，已退出 RESCUER 专属页面');
+  }else if(role==='VISITOR'&&loginRequiredPages.has(current)){
+    historyStack.length=0; show('home',false); showToast('已切换为 VISITOR，仅保留公开访问');
+  }
+};
+document.querySelectorAll('[data-clue-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-clue-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const mine=b.dataset.clueTab==='mine';document.getElementById('cluePublish').style.display=mine?'none':'block';document.getElementById('clueMine').style.display=mine?'block':'none'});
+document.querySelectorAll('[data-result-tab]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-result-tab]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  const success=b.dataset.resultTab==='success';
+  document.getElementById('resultSuccess').style.display=success?'block':'none';
+  document.getElementById('resultFailed').style.display=success?'none':'block';
+});
+
+document.querySelectorAll('[data-toast]').forEach(b=>b.onclick=()=>showToast(b.dataset.toast));
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block';
+  clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>t.style.display='none',1800);
+}
+
+document.querySelectorAll('[data-start-task]').forEach(b=>b.onclick=()=>{
+  b.textContent='已开始救助'; b.disabled=true; showToast('WAITING_START → IN_PROGRESS（示意）');
+});
+
+document.querySelectorAll('[data-accept]').forEach((b,i)=>b.onclick=()=>{if(!isRescuer()){show('home');return}if(i===0){document.getElementById('acceptConflict').style.display='block';b.textContent='刷新后重试'}else{b.textContent='接取成功';b.disabled=true}});
+
+const mobileAnimalStateAction={
+  TREATING:{label:'进入观察',next:'OBSERVING'},
+  OBSERVING:{label:'开放领养',next:'AVAILABLE'},
+  AVAILABLE:{label:'暂停领养',next:'SUSPENDED'},
+  SUSPENDED:{label:'恢复领养',next:'AVAILABLE'},
+  ADOPTED:null
+};
+document.addEventListener('click',e=>{
+  if(e.target.matches('[data-mobile-animal-action]')){
+    const next=e.target.dataset.next;
+    document.getElementById('mobileAnimalStatus').textContent=next;
+    const action=mobileAnimalStateAction[next];
+    document.getElementById('mobileAnimalAction').innerHTML=action
+      ? `<button class="btn primary" data-mobile-animal-action data-next="${action.next}">${action.label}</button>`
+      : `<div class="notice">ADOPTED 无手工状态操作。</div>`;
+    showToast('动物状态已更新为 '+next+'（示意）');
+  }
+});
+
+let animalFormCount=1;
+document.querySelectorAll('[data-add-animal]').forEach(b=>b.onclick=()=>{
+  animalFormCount++;
+  const host=document.getElementById('extraAnimals');
+  const block=document.createElement('div');
+  block.className='card';
+  block.innerHTML=`<div class="list-title">Animal #${animalFormCount} 建档</div>
+    <label>名称</label><input class="input" placeholder="请输入动物名称"/>
+    <div class="filters"><div><label>物种</label><input class="input" placeholder="CAT / DOG"/></div><div><label>性别</label><select><option>MALE</option><option>FEMALE</option><option>UNKNOWN</option></select></div></div>
+    <label>估算年龄（月）</label><input class="input" value="0"/>
+    <label>当前健康情况</label><textarea placeholder="必填健康摘要"></textarea>
+    <label>初始健康记录（可选）</label><textarea placeholder="可选"></textarea>
+    <label>动物图片</label><div class="mini-imgs"><div class="mini-img">＋</div></div>`;
+  host.appendChild(block);
+  showToast('已添加 Animal #'+animalFormCount+' 建档区块');
+});
+
+
+// ---- M01 / M07 dead-button completion ----
+document.querySelectorAll('[data-unfavorite-card]').forEach(b=>b.onclick=()=>{
+  const card=document.getElementById('favoriteCardBean');
+  if(card) card.remove();
+  showToast('已取消收藏');
+});
+document.querySelectorAll('[data-save-profile]').forEach(b=>b.onclick=()=>{
+  showToast('个人资料已保存');
+  setTimeout(()=>show('profile',false),450);
+});
+document.querySelectorAll('[data-login-submit]').forEach(b=>b.onclick=()=>{
+  role='USER'; syncRoleUI(); historyStack.length=0;
+  showToast('登录成功');
+  setTimeout(()=>show('home',false),450);
+});
+document.querySelectorAll('[data-register-submit]').forEach(b=>b.onclick=()=>{
+  showToast('账号创建成功，请登录');
+  setTimeout(()=>show('login',false),450);
+});
+
+// ---- VISITOR public boundary + favorite idempotency ----
+document.querySelectorAll('[data-favorite-toggle]').forEach(b=>b.onclick=()=>{
+  if(isVisitor()){ showToast('收藏需要登录'); setTimeout(()=>show('login'),400); return; }
+  if(!homeFavorited){
+    homeFavorited=true; b.textContent='已收藏'; b.disabled=true;
+    showToast('收藏成功');
+  }else{
+    showToast('已收藏：重复收藏按幂等结果返回');
+  }
+});
+document.querySelectorAll('[data-apply-entry]').forEach(b=>b.onclick=()=>{
+  if(isVisitor()){ showToast('申请领养需要登录'); setTimeout(()=>show('login'),400); return; }
+  if(applicationSubmitted){ showToast('40907：该用户已申请过此动物'); return; }
+  show('apply');
+});
+const applySubmit=document.querySelector('#apply [data-toast]');
+if(applySubmit){
+  applySubmit.onclick=()=>{
+    applicationSubmitted=true;
+    showToast('领养申请已提交');
+    setTimeout(()=>show('records',false),450);
+  };
+}
+
+// ---- Rescue clue image management ----
+document.querySelectorAll('[data-clue-image-add]').forEach(b=>b.onclick=()=>{
+  const host=document.getElementById('clueEditImages');
+  const count=host.querySelectorAll('[data-clue-edit-image]').length;
+  if(count>=9){ showToast('最多保留 9 张图片'); return; }
+  const img=document.createElement('div'); img.className='mini-img'; img.dataset.clueEditImage=''; img.textContent='🖼️';
+  host.appendChild(img); showToast('已添加 1 张示例图片');
+});
+document.querySelectorAll('[data-clue-image-delete]').forEach(b=>b.onclick=()=>{
+  const host=document.getElementById('clueEditImages');
+  const imgs=host.querySelectorAll('[data-clue-edit-image]');
+  if(imgs.length<=1){ showToast('至少保留 1 张线索图片'); return; }
+  imgs[imgs.length-1].remove(); showToast('已删除最后一张图片');
+});
+
+// ---- Unified file error demo ----
+document.querySelectorAll('[data-file-error]').forEach(b=>b.onclick=()=>{
+  showToast('40004：仅支持 JPG/JPEG/PNG，且单张不得超过 5MB');
+});
+
+// ---- Follow-up non-empty validation ----
+document.querySelectorAll('[data-followup-image-toggle]').forEach(b=>b.onclick=()=>{
+  followupHasImage=!followupHasImage;
+  document.getElementById('followupImageBox').textContent=followupHasImage?'已添加 1 张有效示例图片':'＋ 添加回访图片（0～9 张）';
+  b.textContent=followupHasImage?'移除示例图片':'添加一张示例图片';
+});
+document.querySelectorAll('[data-followup-submit]').forEach(b=>b.onclick=()=>{
+  const content=document.getElementById('followupContent').value.trim();
+  const health=document.getElementById('followupHealth').value.trim();
+  if(!content&&!health&&!followupHasImage){
+    showToast('40001：近况、健康情况和有效图片至少填写一项');
+    return;
+  }
+  showToast('回访已提交');
+  setTimeout(()=>show('records',false),450);
+});
+
+syncRoleUI();
+</script>
+</body>
+</html>

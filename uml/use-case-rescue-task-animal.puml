@@ -1,0 +1,59 @@
+@startuml
+title PetLink V1.0 救助任务与动物档案用例图
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+actor "救助人员\nRESCUER" as Rescuer
+
+rectangle "PetLink：救助任务与动物档案" {
+    package "救助任务" {
+        usecase "查看待接取线索" as R_ViewWaiting
+        usecase "接取救助任务\nUC-03" as R_AcceptTask
+        usecase "更新并完成救助任务\nUC-04" as R_UpdateTask
+        usecase "填写救助记录" as R_RescueRecord
+        usecase "查看 / 管理救助任务" as R_ManageTask
+        usecase "处理异常任务" as R_HandleAbnormal
+    }
+
+    package "动物档案" {
+        usecase "创建动物档案" as R_CreateAnimal
+        usecase "维护动物档案" as R_EditAnimal
+        usecase "添加健康记录" as R_AddHealth
+        usecase "查看健康记录" as R_ViewHealth
+        usecase "管理动物图片" as R_ManageImage
+    }
+}
+
+actor "系统管理员\nADMIN" as Admin
+
+Rescuer -- R_ViewWaiting
+Rescuer -- R_AcceptTask
+Rescuer -- R_UpdateTask
+Rescuer -- R_RescueRecord
+Rescuer -- R_CreateAnimal
+Rescuer -- R_EditAnimal
+Rescuer -- R_AddHealth
+Rescuer -- R_ViewHealth
+Rescuer -- R_ManageImage
+
+R_ManageTask -- Admin
+R_HandleAbnormal -- Admin
+R_CreateAnimal -- Admin
+R_EditAnimal -- Admin
+R_AddHealth -- Admin
+R_ViewHealth -- Admin
+R_ManageImage -- Admin
+
+note bottom of R_AcceptTask
+采用条件更新避免同一线索被并发重复接取。
+end note
+
+note bottom of R_CreateAnimal
+救助成功后可创建一个或多个动物档案。
+RESCUER 仅创建、维护本人负责动物；ADMIN 可创建、维护全部动物档案。
+end note
+
+@enduml

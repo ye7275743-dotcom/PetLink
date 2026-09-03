@@ -1,0 +1,62 @@
+@startuml
+title PetLink V1.0 领养与回访管理用例图
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+actor "普通用户\nUSER" as User
+
+rectangle "PetLink：领养与回访管理" {
+    package "领养申请与记录" {
+        usecase "提交领养申请\nUC-05" as D_Apply
+        usecase "撤回本人待审核申请" as D_Withdraw
+        usecase "查看本人领养申请及状态" as D_ViewApplication
+        usecase "审核领养申请\nUC-06" as D_Audit
+        usecase "查看本人领养记录" as D_ViewOwnAdoption
+        usecase "查看负责动物的领养情况" as D_ViewResponsibleAdoption
+        usecase "管理领养记录" as D_ManageAdoption
+    }
+
+    package "领养回访" {
+        usecase "提交领养回访\nUC-07" as D_SubmitFollowUp
+        usecase "查看本人回访" as D_ViewOwnFollowUp
+        usecase "查看负责动物的回访" as D_ViewResponsibleFollowUp
+        usecase "查看全部回访" as D_ViewAllFollowUp
+    }
+}
+
+actor "救助人员\nRESCUER" as Rescuer
+actor "系统管理员\nADMIN" as Admin
+
+User -- D_Apply
+User -- D_Withdraw
+User -- D_ViewApplication
+User -- D_ViewOwnAdoption
+User -- D_SubmitFollowUp
+User -- D_ViewOwnFollowUp
+
+D_Apply -- Rescuer
+D_Withdraw -- Rescuer
+D_ViewApplication -- Rescuer
+D_ViewOwnAdoption -- Rescuer
+D_SubmitFollowUp -- Rescuer
+D_ViewOwnFollowUp -- Rescuer
+D_ViewResponsibleAdoption -- Rescuer
+D_ViewResponsibleFollowUp -- Rescuer
+
+D_Audit -- Admin
+D_ManageAdoption -- Admin
+D_ViewAllFollowUp -- Admin
+
+note bottom of D_Apply
+USER 与 RESCUER 均可申请任意 AVAILABLE 动物。
+所有申请最终仅由 ADMIN 审核。
+end note
+
+note bottom of D_ViewResponsibleAdoption
+RESCUER 对本人负责动物的领养与回访数据仅有查看权限。
+end note
+
+@enduml

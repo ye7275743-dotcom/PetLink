@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: docker.m.daocloud.io/library/mysql:8.0.36
+    container_name: petlink-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${PETLINK_DB_NAME:-petlink}
+      MYSQL_USER: ${PETLINK_DB_USER:-petlink_app}
+      MYSQL_PASSWORD: ${PETLINK_DB_PASSWORD:?PETLINK_DB_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${PETLINK_DB_ROOT_PASSWORD:?PETLINK_DB_ROOT_PASSWORD is required}
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+08:00
+    volumes:
+      - petlink_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: petlink-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      PETLINK_DB_URL: jdbc:mysql://mysql:3306/${PETLINK_DB_NAME:-petlink}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      PETLINK_DB_USER: ${PETLINK_DB_USER:-petlink_app}
+      PETLINK_DB_PASSWORD: ${PETLINK_DB_PASSWORD:?PETLINK_DB_PASSWORD is required}
+      PETLINK_JWT_SECRET: ${PETLINK_JWT_SECRET:?PETLINK_JWT_SECRET is required}
+      PETLINK_FILE_ROOT: /app/data/uploads
+      PETLINK_CORS_ORIGIN_PC: ${PETLINK_PUBLIC_ORIGIN:?PETLINK_PUBLIC_ORIGIN is required}
+      PETLINK_TEMPORARY_TTL: ${PETLINK_TEMPORARY_TTL:-PT1H}
+      PETLINK_FILE_CLEANUP_INTERVAL_MS: ${PETLINK_FILE_CLEANUP_INTERVAL_MS:-3600000}
+      PETLINK_CLUE_IDEMPOTENCY_TTL: ${PETLINK_CLUE_IDEMPOTENCY_TTL:-PT10M}
+      PETLINK_CLUE_IDEMPOTENCY_CLEANUP_INTERVAL_MS: ${PETLINK_CLUE_IDEMPOTENCY_CLEANUP_INTERVAL_MS:-60000}
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./data/uploads:/app/data/uploads
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: petlink-web
+    restart: unless-stopped
+    ports:
+      - "${PETLINK_WEB_PORT:-8081}:80"
+    depends_on:
+      - backend
+
+volumes:
+  petlink_mysql_data:

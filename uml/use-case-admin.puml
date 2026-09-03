@@ -1,0 +1,47 @@
+@startuml
+title PetLink V1.0 后台管理用例图
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+actor "系统管理员\nADMIN" as Admin
+
+rectangle "PetLink：后台管理" {
+    package "账户管理" {
+        usecase "查看用户列表与详情" as B_ViewUser
+        usecase "启用 / 禁用用户" as B_EnableUser
+        usecase "调整救助人员身份" as B_ManageRescuer
+    }
+
+    package "公告管理" {
+        usecase "新增公告" as B_CreateNotice
+        usecase "修改公告" as B_EditNotice
+        usecase "发布公告" as B_PublishNotice
+        usecase "撤回公告" as B_WithdrawNotice
+    }
+
+    package "数据统计" {
+        usecase "查看救助线索统计" as B_ClueStatistics
+        usecase "查看救助任务统计" as B_TaskStatistics
+        usecase "查看动物状态统计" as B_AnimalStatistics
+        usecase "查看领养申请统计" as B_AdoptionStatistics
+        usecase "查看救助与领养趋势" as B_TrendStatistics
+    }
+}
+
+Admin -- B_ViewUser
+Admin -- B_EnableUser
+Admin -- B_ManageRescuer
+Admin -- B_CreateNotice
+Admin -- B_EditNotice
+Admin -- B_PublishNotice
+Admin -- B_WithdrawNotice
+Admin -- B_ClueStatistics
+Admin -- B_TaskStatistics
+Admin -- B_AnimalStatistics
+Admin -- B_AdoptionStatistics
+Admin -- B_TrendStatistics
+
+@enduml

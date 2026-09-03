@@ -1,0 +1,84 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-04（a）开始救助并追加救助记录
+
+actor "RESCUER" as Rescuer
+participant "移动端\nUniApp" as App
+participant "RescueTaskController" as C
+participant "RescueTaskService" as S
+participant "RescueTaskMapper" as TM
+participant "RescueRecordMapper" as RRM
+participant "OperationLogMapper" as OLM
+database "MySQL" as DB
+
+note over App,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+group 开始救助
+  Rescuer -> App : 点击“开始救助”
+  App -> C : POST /api/rescue-tasks/{taskId}/start
+  C -> S : start(taskId, currentUserId)
+
+  S -> DB : BEGIN
+  S -> TM : conditional UPDATE\nWHERE id=taskId\nAND rescuer_id=currentUserId\nAND status=WAITING_START\n→ IN_PROGRESS + startedAt
+  TM -> DB : UPDATE
+  DB --> TM : affectedRows
+
+  alt affectedRows = 0
+    S -> TM : requery taskId
+    TM -> DB : SELECT
+    DB --> TM : row / none
+    S -> DB : ROLLBACK
+    S --> C : 40401 / 40901
+  else affectedRows = 1
+    S -> OLM : INSERT OperationLog\nRESCUE_TASK + START_RESCUE\nWAITING_START→IN_PROGRESS
+    OLM -> DB : INSERT
+
+    break 任一数据库写入或 OperationLog 写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : StateActionResponse
+    C --> App : 200 OK
+  end
+end
+
+loop 0..N 次追加救助记录
+  Rescuer -> App : 填写救助过程
+  App -> C : POST /api/rescue-tasks/{taskId}/records
+  C -> S : addRecord(taskId, currentUserId, content)
+
+  S -> DB : BEGIN
+  S -> TM : SELECT Task FOR UPDATE
+  TM -> DB : SELECT ... FOR UPDATE
+  DB --> TM : Task / none
+
+  alt Task不存在 / 非负责人
+    S -> DB : ROLLBACK
+    S --> C : 40401 RESOURCE_NOT_FOUND
+  else status != IN_PROGRESS
+    S -> DB : ROLLBACK
+    S --> C : 40901 BUSINESS_STATE_CONFLICT
+  else 合法
+    S -> RRM : INSERT RescueRecord\nrecorderId=currentUserId
+    RRM -> DB : INSERT
+
+    break 任一数据库写入失败
+      S -> DB : ROLLBACK
+      S --> C : 统一业务异常
+    end
+
+    S -> DB : COMMIT
+    S --> C : RescueRecordResponse
+    C --> App : 201 Created
+  end
+end
+
+@enduml
+

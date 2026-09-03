@@ -1,0 +1,19 @@
+# Frontend dependencies and build output
+petlink-pc/node_modules/
+petlink-pc/dist/
+petlink-mobile/node_modules/
+petlink-mobile/dist/
+
+# OS/editor noise and generated deployment artifacts
+.DS_Store
+*.log
+server/.mvn/dist/
+deploy/petlink-production/backend/*.jar
+deploy/petlink-production/web/pc/
+deploy/petlink-production/web/mobile/
+
+# Machine-local frontend environment overrides
+petlink-pc/.env.local
+petlink-pc/.env.*.local
+petlink-mobile/.env.local
+petlink-mobile/.env.*.local

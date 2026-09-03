@@ -1,0 +1,309 @@
+@startuml
+title PetLink V1.0 核心业务 ER 图
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+hide methods
+
+entity "sys_user" as user {
+  * id : BIGINT <<PK>>
+  --
+  role_code : VARCHAR
+  status : VARCHAR
+}
+
+entity "rescue_clue" as clue {
+  * id : BIGINT <<PK>>
+  --
+  publisher_id : BIGINT <<FK>>
+  reviewer_id : BIGINT <<FK>>
+  status : VARCHAR
+}
+
+entity "rescue_clue_image" as clue_image {
+  * id : BIGINT <<PK>>
+  --
+  clue_id : BIGINT <<FK>>
+  image_path : VARCHAR
+  sort_order : TINYINT
+}
+
+entity "rescue_task" as task {
+  * id : BIGINT <<PK>>
+  --
+  clue_id : BIGINT <<FK>>
+  rescuer_id : BIGINT <<FK>>
+  status : VARCHAR
+  active_clue_id : BIGINT <<GENERATED, UNIQUE>>
+}
+
+entity "rescue_record" as rescue_record {
+  * id : BIGINT <<PK>>
+  --
+  task_id : BIGINT <<FK>>
+  recorder_id : BIGINT <<FK>>
+}
+
+entity "animal" as animal {
+  * id : BIGINT <<PK>>
+  --
+  rescue_task_id : BIGINT <<FK>>
+  status : VARCHAR
+  version : INT
+}
+
+entity "animal_image" as animal_image {
+  * id : BIGINT <<PK>>
+  --
+  animal_id : BIGINT <<FK>>
+  image_path : VARCHAR
+  sort_order : SMALLINT
+}
+
+entity "health_record" as health {
+  * id : BIGINT <<PK>>
+  --
+  animal_id : BIGINT <<FK>>
+  recorder_id : BIGINT <<FK>>
+}
+
+entity "adoption_application" as application {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  animal_id : BIGINT <<FK>>
+  reviewer_id : BIGINT <<FK>>
+  status : VARCHAR
+  approved_animal_id : BIGINT <<GENERATED, UNIQUE>>
+}
+
+entity "adoption_record" as adoption {
+  * id : BIGINT <<PK>>
+  --
+  application_id : BIGINT <<FK>>
+  animal_id : BIGINT <<FK>>
+  user_id : BIGINT <<FK>>
+}
+
+entity "follow_up_record" as follow_up {
+  * id : BIGINT <<PK>>
+  --
+  adoption_record_id : BIGINT <<FK>>
+  submitter_id : BIGINT <<FK>>
+  idempotency_key : VARCHAR(64)
+}
+
+entity "follow_up_image" as follow_image {
+  * id : BIGINT <<PK>>
+  --
+  follow_up_id : BIGINT <<FK>>
+  image_path : VARCHAR
+  sort_order : TINYINT
+}
+
+entity "favorite" as favorite {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  animal_id : BIGINT <<FK>>
+}
+
+entity "announcement" as announcement {
+  * id : BIGINT <<PK>>
+  --
+  created_by : BIGINT <<FK>>
+  updated_by : BIGINT <<FK>>
+  status : VARCHAR
+  version : INT
+}
+
+entity "operation_log" as op_log {
+  * id : BIGINT <<PK>>
+  --
+  operator_id : BIGINT <<FK>>
+  business_type : VARCHAR
+  business_id : BIGINT
+}
+
+' ===== 救助 =====
+
+user ||--o{ clue : "publisher_id 发布"
+user |o--o{ clue : "reviewer_id 审核"
+
+clue ||--|{ clue_image : "包含"
+
+clue ||--o{ task : "产生"
+user ||--o{ task : "rescuer_id 负责"
+
+task ||--o{ rescue_record : "包含"
+user ||--o{ rescue_record : "recorder_id 填写"
+
+task ||--o{ animal : "救助成功创建"
+
+' ===== 动物 =====
+
+animal ||--o{ animal_image : "包含"
+animal ||--o{ health : "健康记录"
+user ||--o{ health : "recorder_id 填写"
+
+' ===== 领养 =====
+
+user ||--o{ application : "user_id 提交"
+user |o--o{ application : "reviewer_id 审核"
+animal ||--o{ application : "接收"
+
+application ||--o| adoption : "批准后生成"
+animal ||--o| adoption : "成功领养"
+user ||--o{ adoption : "user_id 领养"
+
+' ===== 回访 =====
+
+adoption ||--o{ follow_up : "产生回访"
+user ||--o{ follow_up : "submitter_id 提交"
+
+follow_up ||--o{ follow_image : "包含"
+
+' ===== 收藏 =====
+
+user ||--o{ favorite : "收藏"
+animal ||--o{ favorite : "被收藏"
+
+' ===== 公告 =====
+
+user ||--o{ announcement : "created_by 创建"
+user ||--o{ announcement : "updated_by 最后更新"
+
+' ===== 审计 =====
+
+user ||--o{ op_log : "operator_id 执行"
+
+note right of op_log
+business_type + business_id
+逻辑关联具体业务对象。
+
+除 operator_id 外，
+不与各业务表建立多态物理外键。
+
+日志只允许 INSERT / SELECT，
+不允许业务代码 UPDATE / DELETE。
+
+operation_type 由 Java Enum 管理，
+Service 校验其与 business_type 的组合。
+end note
+
+note bottom of clue
+一条 RescueClue 可以保留多次历史 RescueTask，
+但同一时刻最多存在一个活动任务。
+
+活动状态：
+WAITING_START / IN_PROGRESS
+
+该约束通过 RescueClue 状态条件更新
+与 UC-03 创建 RescueTask 的事务共同保证。
+
+不能对 rescue_task.clue_id 设置普通 UNIQUE。
+end note
+
+note bottom of animal
+不冗余保存 responsible_rescuer_id。
+
+负责人通过：
+animal.rescue_task_id
+→ rescue_task.rescuer_id
+→ sys_user.id
+追溯。
+end note
+
+note bottom of task
+一般关系：
+RescueTask 1 → 0..N Animal
+
+附加业务约束：
+status = SUCCESS 时
+必须至少存在一个 Animal。
+end note
+
+note bottom of application
+UNIQUE(user_id, animal_id)
+UNIQUE(approved_animal_id)
+
+user_id、animal_id 创建后不得修改。
+reviewer_id 审核前可为空，
+审核角色必须由 Service 校验为 ADMIN。
+
+approved_animal_id 仅在 APPROVED 时
+等于 animal_id，用于保证同一动物
+最多一条批准申请。
+end note
+
+note bottom of adoption
+application_id 是领养批准来源。
+
+user_id、animal_id 必须从锁定后的
+AdoptionApplication 复制，
+客户端不得指定或覆盖，
+创建后不得修改。
+
+UNIQUE(application_id)
+UNIQUE(animal_id)
+
+本表是不可变成功领养事实，
+不含 updated_at / version / deleted。
+end note
+
+note bottom of follow_up
+submitter_id 必须等于关联
+AdoptionRecord.user_id。
+
+后端根据认证用户校验所有权，
+客户端不得指定 submitter_id。
+
+idempotency_key 使用客户端生成的 UUID，
+服务端规范化为小写，NOT NULL，
+随 FollowUpRecord 持久保存，
+创建后不可修改。
+
+同一 submitter 不得重复使用相同幂等键。
+
+CONSTRAINT uk_follow_up_submitter_idempotency
+UNIQUE(submitter_id, idempotency_key)
+
+该唯一约束仅用于防止同一请求重复执行，
+不限制一次领养多次回访。
+end note
+
+note bottom of follow_image
+每条回访允许 0..9 张图片。
+
+UNIQUE(follow_up_id, sort_order)
+UNIQUE(image_path)
+CHECK(sort_order BETWEEN 1 AND 9)
+
+图片创建后不追加、不删除、不重排。
+end note
+
+note bottom of announcement
+created_by、updated_by 均为 NOT NULL。
+
+创建时二者均取当前 ADMIN.id；
+修改、发布或撤回时更新 updated_by。
+
+字段只能从认证上下文取得，
+ADMIN 角色由 Service 校验。
+
+状态仅允许：
+DRAFT → PUBLISHED → WITHDRAWN
+
+所有内容及状态更新使用 version 乐观锁。
+end note
+
+note bottom of favorite
+UNIQUE(user_id, animal_id)
+
+仅 AVAILABLE 动物可新建收藏；
+动物后续状态变化不自动删除收藏。
+收藏与取消接口均采用幂等语义。
+end note
+
+@enduml

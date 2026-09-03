@@ -1,0 +1,123 @@
+@startuml
+hide footbox
+skinparam shadowing false
+
+title UC-07 提交领养回访
+
+actor "最终领养人\nUSER / RESCUER" as Adopter
+participant "移动端\nUniApp" as App
+participant "FollowUpController" as C
+participant "FollowUpService" as S
+participant "AdoptionRecordMapper" as ARM
+participant "FollowUpRecordMapper" as FRM
+participant "FollowUpImageMapper" as FIM
+participant "TemporaryFileMapper" as TFM
+participant "FileService" as FS
+database "MySQL" as DB
+
+note over App,C
+JWT 认证、账号状态检查和 RBAC 权限校验
+由公共安全链完成，本图不重复展开。
+end note
+
+Adopter -> App : 填写回访并提交
+App -> C : POST /api/adoption-records/{adoptionRecordId}/follow-ups\nidempotencyKey + content/health/imageTokens
+C -> S : createFollowUp(adoptionRecordId, userId, dto)
+
+S -> S : 校验标准 UUID\n转 lowercase canonical form
+S -> FRM : 事务外快速查询\nsubmitterId + idempotencyKey
+FRM -> DB : SELECT
+DB --> FRM : existing / none
+
+alt existing 且 adoptionRecordId 相同
+  S --> C : 首次 FollowUpRecordResponse
+  C --> App : 200 OK（幂等重放）
+
+else existing 但 adoptionRecordId 不同
+  S --> C : 40908 IDEMPOTENCY_KEY_CONFLICT
+  C --> App : 409
+
+else existing 不存在
+  S -> DB : BEGIN
+
+  S -> ARM : SELECT AdoptionRecord
+  ARM -> DB : SELECT
+  DB --> ARM : record / none
+
+  alt AdoptionRecord不存在 / 非本人
+    S -> DB : ROLLBACK
+    S --> C : 40401 RESOURCE_NOT_FOUND
+
+  else 归属合法
+    S -> FRM : INSERT FollowUpRecord\nsubmitterId=current user
+    FRM -> DB : INSERT
+
+    alt 命中 uk_follow_up_submitter_idempotency
+      S -> DB : ROLLBACK
+      S -> FRM : 按 submitterId + key 重查
+      FRM -> DB : SELECT
+      DB --> FRM : existing
+
+      alt adoptionRecordId相同
+        S --> C : 首次 FollowUpRecordResponse
+        C --> App : 200 OK
+      else adoptionRecordId不同
+        S --> C : 40908 IDEMPOTENCY_KEY_CONFLICT
+        C --> App : 409
+      end
+
+    else INSERT成功
+      alt trim 后 content、healthCondition 均为空 且 imageTokens 为空
+        S -> DB : ROLLBACK
+        S --> C : 40001 INVALID_PARAMETER
+        C --> App : 400
+
+      else 至少存在文字/健康内容或待校验图片
+        opt imageTokens 非空
+          S -> S : 校验数量1~9且不重复
+          S -> TFM : SELECT tokens\nORDER BY id ASC FOR UPDATE
+          TFM -> DB : SELECT ... FOR UPDATE
+          DB --> TFM : rows
+          S -> S : 校验 row count/owner/UPLOADED/expiry/type/size
+
+          loop 按客户端 imageTokens 原顺序
+            S -> FS : generateFormalPath(FOLLOW_UP)
+            FS --> S : formalPath
+
+            S -> FIM : INSERT FollowUpImage\nsortOrder=1..N
+            FIM -> DB : INSERT
+
+            S -> TFM : UPDATE TemporaryFile\nBOUND + businessType=FOLLOW_UP\nbusinessId=followUpId + formalPath
+            TFM -> DB : conditional UPDATE
+            DB --> TFM : affectedRows=1
+          end
+        end
+
+        loop 每张图片
+          S -> FS : copy temp → formal
+          FS --> S : ok
+        end
+
+        break 任一数据库写入、文件校验或 formal copy 失败
+          S -> DB : ROLLBACK
+          S -> FS : 删除本事务新建正式副本\n保留原 temp
+          S --> C : 统一业务异常
+          C --> App : 4xx / 5xx
+        end
+
+        S -> DB : COMMIT
+        S -> FS : 删除原临时文件
+        FS --> S : done / deferred
+        S -> TFM : 安全删除 BOUND technical row
+        TFM -> DB : DELETE verified rows
+        DB --> TFM : done / deferred
+
+        S --> C : FollowUpRecordResponse
+        C --> App : 201 Created
+      end
+    end
+  end
+end
+
+@enduml
+

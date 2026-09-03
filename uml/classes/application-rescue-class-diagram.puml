@@ -1,0 +1,158 @@
+@startuml
+title PetLink 应用层类图（a）M01～M04 与公共支撑 V1.0
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype polyline
+skinparam nodesep 28
+skinparam ranksep 34
+skinparam packageStyle rectangle
+top to bottom direction
+
+package "M01 用户认证" as M01 {
+  class AuthController
+  class UserService {
+    +register()
+    +login()
+    +getCurrentUser()
+    +updateProfile()
+  }
+  interface UserMapper
+
+  AuthController --> UserService
+  UserService --> UserMapper
+}
+
+package "M02 救助线索" as M02 {
+  class RescueClueController
+  class RescueClueService {
+    +createClue()
+    +auditClue()
+    +withdrawClue()
+    +appendImages()
+    +deleteImage()
+  }
+  interface RescueClueMapper
+  interface RescueClueImageMapper
+
+  RescueClueController --> RescueClueService
+  RescueClueService --> RescueClueMapper
+  RescueClueService --> RescueClueImageMapper
+}
+
+package "M03 救助任务" as M03 {
+  class RescueTaskController
+  class RescueTaskService {
+    +accept()
+    +start()
+    +addRecord()
+    +submitResult()
+    +cancelTask()
+    +resolveFailure()
+  }
+  interface RescueTaskMapper
+  interface RescueRecordMapper
+
+  RescueTaskController --> RescueTaskService
+  RescueTaskService --> RescueTaskMapper
+  RescueTaskService --> RescueRecordMapper
+}
+
+package "M04 动物档案" as M04 {
+  class AnimalController
+  class AnimalService {
+    +getPublicAnimals()
+    +getAnimalDetail()
+    +updateAnimal()
+    +addImages()
+    +addHealthRecord()
+    +changeStatus()
+  }
+  interface AnimalMapper
+  interface AnimalImageMapper
+  interface HealthRecordMapper
+
+  AnimalController --> AnimalService
+  AnimalService --> AnimalMapper
+  AnimalService --> AnimalImageMapper
+  AnimalService --> HealthRecordMapper
+}
+
+package "公共文件 / 幂等 / 审计支撑" as COMMON {
+  class TemporaryFileController
+  class TemporaryFileService {
+    +uploadTemporary()
+  }
+  class FileService <<shared>> {
+    +storeTemporary()
+    +generateFormalPath()
+    +copyToFormal()
+    +deleteTemporary()
+  }
+  class IdempotencyService {
+    +issueClueSubmitKey()
+    +claim()
+    +markSucceeded()
+    +release()
+  }
+  interface TemporaryFileMapper
+  interface OperationLogMapper
+
+  TemporaryFileController --> TemporaryFileService
+  TemporaryFileService --> FileService
+  TemporaryFileService --> TemporaryFileMapper
+}
+
+' 2×2 module grid, shared support below.
+M01 -[hidden]right-> M02
+M01 -[hidden]down-> M03
+M02 -[hidden]down-> M04
+M03 -[hidden]right-> M04
+M03 -[hidden]down-> COMMON
+M04 -[hidden]down-> COMMON
+
+' Cross-module dependencies preserved from the Frozen semantics.
+RescueClueService --> IdempotencyService
+RescueClueService --> FileService
+RescueClueService --> TemporaryFileMapper
+RescueClueService --> OperationLogMapper
+
+RescueTaskService --> RescueClueMapper
+RescueTaskService --> AnimalMapper
+RescueTaskService --> AnimalImageMapper
+RescueTaskService --> HealthRecordMapper
+RescueTaskService --> FileService
+RescueTaskService --> TemporaryFileMapper
+RescueTaskService --> OperationLogMapper
+
+AnimalService --> RescueTaskMapper
+AnimalService --> FileService
+AnimalService --> TemporaryFileMapper
+AnimalService --> OperationLogMapper
+
+note bottom of TemporaryFileService
+对应公共上传入口：
+POST /api/files/temporary
+
+TemporaryFileService 负责上传业务编排
+和 temporary_file 数据库记录；
+FileService 只处理物理文件。
+end note
+
+note bottom of OperationLogMapper
+仅提供 insert / select；
+业务层不提供 update / delete。
+end note
+
+note bottom of FileService
+正式文件流程：
+copy → COMMIT → cleanup
+end note
+
+note bottom of IdempotencyService
+仅用于 UC-01 短期幂等；
+V1.0 单实例进程内缓存。
+end note
+
+@enduml
+
