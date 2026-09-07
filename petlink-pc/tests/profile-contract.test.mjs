@@ -8,10 +8,10 @@ const api = readFileSync(new URL('../src/api/index.js', import.meta.url), 'utf8'
 const view = readFileSync(new URL('../src/views/ProfileView.vue', import.meta.url), 'utf8')
 
 test('PC workbench exposes the profile page for ADMIN and RESCUER', () => {
-  assert.match(router, /path:'profile'.*roles:\['ADMIN','RESCUER'\]/s)
+  assert.match(router, /path:'\/profile'.*roles:\['ADMIN','RESCUER'\]/s)
   assert.match(layout, /\['\/profile','profile','个人资料',\['ADMIN','RESCUER'\]\]/)
   assert.match(api, /patchMe:\s*data\s*=>\s*request\.patch\('\/users\/me'/)
   assert.match(view, /authApi\.me\(\)/)
   assert.match(view, /authApi\.patchMe\(/)
-  assert.match(view, /仅可修改昵称和手机号/)
+  assert.match(view, /更新昵称和联系方式/)
 })

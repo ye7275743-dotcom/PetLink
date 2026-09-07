@@ -17,6 +17,18 @@ public interface RescueClueImageMapper extends BaseMapper<RescueClueImage> {
     @Select("SELECT * FROM rescue_clue_image WHERE clue_id=#{clueId} ORDER BY sort_order ASC, id ASC LIMIT 1")
     RescueClueImage selectCover(@Param("clueId") Long clueId);
 
+    @Select({"<script>",
+            "SELECT image.* FROM rescue_clue_image image",
+            "WHERE image.clue_id IN",
+            "<foreach collection='clueIds' item='clueId' open='(' separator=',' close=')'>#{clueId}</foreach>",
+            "AND NOT EXISTS (",
+            " SELECT 1 FROM rescue_clue_image earlier",
+            " WHERE earlier.clue_id=image.clue_id",
+            " AND (earlier.sort_order&lt;image.sort_order OR (earlier.sort_order=image.sort_order AND earlier.id&lt;image.id))",
+            ") ORDER BY image.clue_id ASC",
+            "</script>"})
+    List<RescueClueImage> selectCovers(@Param("clueIds") List<Long> clueIds);
+
     @Select("SELECT COUNT(*) FROM rescue_clue_image WHERE clue_id=#{clueId}")
     int countByClueId(@Param("clueId") Long clueId);
 

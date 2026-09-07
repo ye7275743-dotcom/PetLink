@@ -76,6 +76,7 @@ export const contentApi = {
   favorites: params => request.get('/favorites/me',{params}),
   announcements: params => request.get('/announcements',{params}),
   announcement: id => request.get(`/announcements/${p(id)}`),
+  adminDeleteAnnouncement: (id,version) => request.delete(`/admin/announcements/${p(id)}`,{params:{version}}),
   adminCreateAnnouncement: data => request.post('/admin/announcements',data),
   adminAnnouncements: params => request.get('/admin/announcements',{params}),
   adminAnnouncement: id => request.get(`/admin/announcements/${p(id)}`),
@@ -85,6 +86,8 @@ export const contentApi = {
 }
 
 export const adminApi = {
+  deleteUser: id => request.delete(`/admin/users/${p(id)}`),
+  changeRole: (id,data) => request.post(`/admin/users/${p(id)}/role`,data),
   users: params => request.get('/admin/users',{params}),
   user: id => request.get(`/admin/users/${p(id)}`),
   enableUser: id => request.post(`/admin/users/${p(id)}/enable`),

@@ -1,7 +1,7 @@
 <template>
   <MobileShell :screen="screen" @reach-bottom="onReachBottom">
     <template v-if="['applicationDetail','applicationRejected','applicationInvalidated'].includes(screen)">
-      <BackButton/><view class="title">领养申请详情 · 第五模块</view>
+      <BackButton/><view class="title">领养申请详情</view>
       <PageState :loading="detailState.loading.value" :error="detailState.error.value" :empty="!application" :has-data="!!application" @retry="loadApplication">
         <view v-if="application" class="card"><text class="card-title">申请 #{{application.id}}</text><StatusBadge :value="application.status"/><view class="kv"><b>领养理由</b><text>{{application.adoptionReason}}</text></view><view class="kv"><b>住房条件</b><text>{{application.housingCondition}}</text></view><view class="kv"><b>家庭成员</b><text>{{application.familyMembers}}</text></view><view class="kv"><b>养宠经验</b><text>{{application.petExperience}}</text></view><view class="kv"><b>联系方式</b><text>{{application.contact}}</text></view><view v-if="application.rejectReason" class="dangerbox">{{application.rejectReason}}</view><view v-if="application.status==='INVALIDATED'" class="notice">同动物其他申请已获批准，本申请自动失效。</view><button v-if="application.status==='PENDING'" class="btn danger wide" :disabled="actionSubmit.submitting.value" @click="withdrawApplication">{{actionSubmit.submitting.value?'处理中…':'撤回申请'}}</button></view>
       </PageState>

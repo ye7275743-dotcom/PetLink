@@ -17,3 +17,13 @@ petlink-pc/.env.local
 petlink-pc/.env.*.local
 petlink-mobile/.env.local
 petlink-mobile/.env.*.local
+
+# LaTeX intermediate files and visual QA renders
+docs/progress/*.aux
+docs/progress/*.toc
+docs/progress/*.out
+docs/progress/*.fls
+docs/progress/*.fdb_latexmk
+docs/progress/*.synctex.gz
+docs/progress/*_副本.pdf
+docs/progress/qa/

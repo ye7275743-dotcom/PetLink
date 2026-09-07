@@ -87,9 +87,9 @@ public class RescueClueService {
         return transactionalService.withdraw(principal.getUserId(), clueId);
     }
 
-    public PageResponse<ClueSummaryResponse> adminList(UserPrincipal principal, int page, int size, String status) {
+    public PageResponse<ClueSummaryResponse> adminList(UserPrincipal principal, int page, int size, String status, String keyword) {
         requireAdmin(principal);
-        return queryService.adminList(principal, page, size, status);
+        return queryService.adminList(principal, page, size, status, keyword);
     }
 
     public StateActionResponse audit(UserPrincipal principal, Long clueId, AuditClueRequest request) {

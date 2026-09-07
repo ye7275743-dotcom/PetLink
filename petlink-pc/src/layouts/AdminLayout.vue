@@ -3,9 +3,10 @@
     <NetworkStatus />
     <a class="skip-link" href="#main-content">跳转到主要内容</a>
     <aside>
-      <div class="brand"><NavIcon class="brand-icon" name="spark" :size="24" /> <span>宠链</span><small>流浪动物救助中心</small></div>
+      <div class="brand"><NavIcon class="brand-icon" name="spark" :size="24" /> <BrandLockup/><small>流浪动物救助中心</small></div>
       <div class="role"><b>{{ roleText(user?.roleCode) }}</b><br>{{ user?.nickname || user?.account }}</div>
       <nav>
+        <router-link to="/" class="nav-item"><NavIcon name="home"/><span class="nav-label">公众首页</span></router-link>
         <router-link v-for="item in menus" :key="item.path" :to="item.path" class="nav-item" active-class="active" :aria-label="item.label" :title="item.label">
           <NavIcon :name="item.icon"/><span class="nav-label">{{ item.label }}</span>
         </router-link>
@@ -19,6 +20,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../store/auth.js'
+import BrandLockup from '../components/BrandLockup.vue'
 import NavIcon from '../components/NavIcon.vue'
 import NetworkStatus from '../components/NetworkStatus.vue'
 import { roleText } from '../utils/displayText.js'
@@ -64,7 +66,7 @@ aside::before {
 
 .brand {
   position: relative;
-  padding: 0 12px 24px 42px;
+  padding: 0 0 24px 34px;
   font-family: var(--display);
   font-size: 32px;
   font-weight: 700;
@@ -204,6 +206,7 @@ main {
 
   .brand-icon{left:14px}
 
+  .brand :deep(.brand-wordmark),
   .brand small,
   .role,
   .nav-label {

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class RescueClueQueryService {
@@ -32,22 +31,21 @@ public class RescueClueQueryService {
         validatePage(page, size);
         String normalizedStatus = normalizeOptionalStatus(status, null);
         long offset = (long) (page - 1) * size;
-        List<ClueSummaryResponse> records = clueMapper
-                .selectMinePage(principal.getUserId(), normalizedStatus, size, offset)
-                .stream().map(assembler::summary).collect(Collectors.toList());
+        List<ClueSummaryResponse> records = assembler.summaries(
+                clueMapper.selectMinePage(principal.getUserId(), normalizedStatus, size, offset));
         long total = clueMapper.countMine(principal.getUserId(), normalizedStatus);
         return new PageResponse<>(records, page, size, total);
     }
 
-    public PageResponse<ClueSummaryResponse> adminList(UserPrincipal principal, int page, int size, String status) {
+    public PageResponse<ClueSummaryResponse> adminList(UserPrincipal principal, int page, int size, String status, String keyword) {
         requireAdmin(principal);
         validatePage(page, size);
         String normalizedStatus = normalizeOptionalStatus(status, "PENDING_REVIEW");
+        String normalizedKeyword = normalizeKeyword(keyword);
         long offset = (long) (page - 1) * size;
-        List<ClueSummaryResponse> records = clueMapper
-                .selectAdminPage(normalizedStatus, size, offset)
-                .stream().map(assembler::summary).collect(Collectors.toList());
-        long total = clueMapper.countAdmin(normalizedStatus);
+        List<ClueSummaryResponse> records = assembler.summaries(
+                clueMapper.selectAdminPage(normalizedStatus, normalizedKeyword, size, offset));
+        long total = clueMapper.countAdmin(normalizedStatus, normalizedKeyword);
         return new PageResponse<>(records, page, size, total);
     }
 
@@ -86,6 +84,13 @@ public class RescueClueQueryService {
         if (!CLUE_STATUSES.contains(value)) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER);
         }
+        return value;
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) return null;
+        String value = keyword.trim();
+        if (value.length() > 100) throw new BusinessException(ErrorCode.INVALID_PARAMETER);
         return value;
     }
 

@@ -27,8 +27,8 @@ for rel in required:
 controllers='\n'.join(p.read_text(encoding='utf-8') for p in (base/'controller').glob('*.java'))
 for endpoint in ['/{animalId}/favorite','/api/favorites','/me','/api/announcements','/api/admin/announcements','/{announcementId}/publish','/{announcementId}/withdraw']:
     need(controllers,endpoint,'M07 endpoint')
-if len(re.findall(r'@(Get|Post|Patch|Delete)Mapping\b',controllers)) != 11:
-    raise SystemExit('FAILED: M07 must expose exactly 11 endpoint mappings')
+if len(re.findall(r'@(Get|Post|Patch|Delete)Mapping\b',controllers)) != 12:
+    raise SystemExit('FAILED: M07 must expose exactly 12 extended endpoint mappings')
 for role in ["hasAnyRole('USER','RESCUER')","hasRole('ADMIN')"]: need(controllers,role,'M07 role boundary')
 
 security=text('src/main/java/com/petlink/config/SecurityConfig.java')
@@ -70,7 +70,9 @@ for needle in ['(!request.isTitlePresent()&&!request.isContentPresent())','Error
     need(announcement_tx,needle,'announcement Frozen rule')
 
 operation_log=text('src/main/java/com/petlink/infrastructure/audit/service/OperationLogService.java')
-need(operation_log,'"ANNOUNCEMENT", Set.of("CREATE", "PUBLISH", "WITHDRAW")','announcement audit whitelist')
+for action in ['"CREATE"','"PUBLISH"','"WITHDRAW"','"DELETE_ANNOUNCEMENT"']:
+    need(operation_log,action,'announcement audit whitelist')
+need(controllers,'@DeleteMapping("/{announcementId}")','announcement deletion endpoint')
 
 smoke=(ROOT/'scripts/smoke-m07.ps1').read_bytes()
 if any(b>=128 for b in smoke): raise SystemExit('FAILED: smoke-m07.ps1 must remain ASCII-only for Windows PowerShell 5.1')
@@ -82,7 +84,7 @@ m07_tests=sum(len(re.findall(r'@Test\b',p.read_text(encoding='utf-8'))) for p in
 total_tests=sum(len(re.findall(r'@Test\b',p.read_text(encoding='utf-8'))) for p in TEST.rglob('*.java'))
 if m07_tests < 45: raise SystemExit(f'FAILED: expected substantial M07 tests, found {m07_tests}')
 print('M07 static implementation checks: PASSED')
-print('M07 API endpoints: 11 (3 favorite + 8 announcement)')
+print('M07 API endpoints: 12 (11 baseline + announcement deletion)')
 print('M07-focused @Test:',m07_tests)
 print('Total @Test:',total_tests)
 print('smoke-m07.ps1 non-ASCII bytes: 0')

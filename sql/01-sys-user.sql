@@ -38,6 +38,9 @@ CREATE TABLE `sys_user` (
         DEFAULT 'ENABLED'
         COMMENT '账号状态：ENABLED/DISABLED',
 
+    `deleted` TINYINT NOT NULL DEFAULT 0
+        COMMENT '逻辑删除：0=正常，1=已删除',
+
     `created_at` DATETIME NOT NULL
         DEFAULT CURRENT_TIMESTAMP
         COMMENT '创建时间',
@@ -77,7 +80,10 @@ CREATE TABLE `sys_user` (
         CHECK (`status` IN ('ENABLED', 'DISABLED')),
 
     KEY `idx_sys_user_role_status`
-        (`role_code`, `status`)
+        (`role_code`, `status`),
+
+    KEY `idx_sys_user_deleted_role_status`
+        (`deleted`, `role_code`, `status`)
 
 ) ENGINE=InnoDB
   DEFAULT CHARACTER SET=utf8mb4

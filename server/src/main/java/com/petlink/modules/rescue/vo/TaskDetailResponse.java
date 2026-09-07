@@ -11,11 +11,11 @@ public class TaskDetailResponse extends TaskSummaryResponse {
     private final List<RescueRecordResponse> records;
     private final List<AnimalSummaryResponse> animals;
 
-    public TaskDetailResponse(String id, String clueId, String status, OffsetDateTime startedAt, OffsetDateTime finishedAt,
+    public TaskDetailResponse(String id, String clueId, String rescuerId, String status, OffsetDateTime startedAt, OffsetDateTime finishedAt,
                               OffsetDateTime createdAt, OffsetDateTime updatedAt, ClueSummaryResponse clue,
                               String failureReason, String cancelReason, List<RescueRecordResponse> records,
                               List<AnimalSummaryResponse> animals) {
-        super(id, clueId, status, startedAt, finishedAt, createdAt, updatedAt);
+        super(id, clueId, rescuerId, status, startedAt, finishedAt, createdAt, updatedAt);
         this.clue = clue;
         this.failureReason = failureReason;
         this.cancelReason = cancelReason;

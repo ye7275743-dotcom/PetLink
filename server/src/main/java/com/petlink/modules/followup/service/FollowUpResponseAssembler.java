@@ -21,6 +21,12 @@ public class FollowUpResponseAssembler {
         return new FollowUpRecordResponse(String.valueOf(record.getId()),String.valueOf(record.getAdoptionRecordId()),String.valueOf(record.getSubmitterId()),
                 record.getContent(),record.getHealthCondition(),images,TimeUtils.toOffset(record.getCreatedAt()));
     }
+    public List<FollowUpRecordResponse> records(List<FollowUpRecord> records){
+        if(records.isEmpty())return List.of();
+        var grouped=imageMapper.selectByFollowUpIds(records.stream().map(FollowUpRecord::getId).collect(Collectors.toList())).stream().collect(Collectors.groupingBy(FollowUpImage::getFollowUpId));
+        return records.stream().map(r->new FollowUpRecordResponse(String.valueOf(r.getId()),String.valueOf(r.getAdoptionRecordId()),String.valueOf(r.getSubmitterId()),
+            r.getContent(),r.getHealthCondition(),grouped.getOrDefault(r.getId(),List.of()).stream().map(this::image).collect(Collectors.toList()),TimeUtils.toOffset(r.getCreatedAt()))).collect(Collectors.toList());
+    }
     private FollowUpImageResponse image(FollowUpImage image){
         return new FollowUpImageResponse(String.valueOf(image.getId()),"/api/media/follow-up-images/"+image.getId(),image.getSortOrder());
     }

@@ -32,8 +32,9 @@ public class RescueClueAdminController {
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String status) {
-        return ApiResponse.success(service.adminList(principal, page, size, status));
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
+        return ApiResponse.success(service.adminList(principal, page, size, status, keyword));
     }
 
     @PostMapping("/{clueId}/audit")

@@ -41,7 +41,20 @@ class AdoptionQueryServiceTest {
         AdoptionApplication a=app(6001L,2002L,5001L,"PENDING"); when(apps.selectById(6001L)).thenReturn(a); service.applicationDetail(new UserPrincipal(9L,"ADMIN"),6001L); verify(assembler).detail(eq(a),any());
     }
     @Test void adminQueueDefaultsPendingFifoProjection(){
-        when(apps.selectAdminPage("PENDING",20,0)).thenReturn(List.of()); service.adminApplications(new UserPrincipal(9L,"ADMIN"),1,20,null); verify(apps).selectAdminPage("PENDING",20,0L);
+        when(apps.selectAdminPage("PENDING",null,null,20,0)).thenReturn(List.of());
+        service.adminApplications(new UserPrincipal(9L,"ADMIN"),1,20,null,null,null);
+        verify(apps).selectAdminPage("PENDING",null,null,20,0L);
+    }
+    @Test void adminQueueForwardsAnimalAndApplicantFilters(){
+        when(apps.selectAdminPage("APPROVED",5001L,1001L,10,10L)).thenReturn(List.of());
+        when(apps.countAdmin("APPROVED",5001L,1001L)).thenReturn(1L);
+        var out=service.adminApplications(new UserPrincipal(9L,"ADMIN"),2,10,"APPROVED",5001L,1001L);
+        assertEquals(1L,out.getTotal());
+        verify(apps).selectAdminPage("APPROVED",5001L,1001L,10,10L);
+    }
+    @Test void adminQueueRejectsNonPositiveFilterIds(){
+        var admin=new UserPrincipal(9L,"ADMIN");
+        assertEquals(ErrorCode.INVALID_PARAMETER,assertThrows(BusinessException.class,()->service.adminApplications(admin,1,20,null,0L,null)).getErrorCode());
     }
     @Test void recordDetailIs404ForNonOwner(){
         AdoptionRecord r=record(7001L,1001L); when(records.selectById(7001L)).thenReturn(r);
@@ -49,7 +62,7 @@ class AdoptionQueryServiceTest {
     }
     @Test void ownerCanListHistoricalRecordsEvenAfterAnimalAdopted(){
         when(records.selectUserPage(1001L,20,0)).thenReturn(List.of(record(7001L,1001L))); when(records.countUser(1001L)).thenReturn(1L);
-        var out=service.myRecords(new UserPrincipal(1001L,"USER"),1,20); assertEquals(1,out.getTotal()); verify(assembler).record(any());
+        var out=service.myRecords(new UserPrincipal(1001L,"USER"),1,20); assertEquals(1,out.getTotal()); verify(assembler).records(any());
     }
     @Test void responsibleRescuerGetsReadOnlyOverview(){
         Animal a=new Animal();a.setId(5001L);a.setStatus("ADOPTED"); when(animals.selectById(5001L)).thenReturn(a); UserPrincipal rescuer=new UserPrincipal(2001L,"RESCUER"); when(access.isResponsibleRescuer(rescuer,a)).thenReturn(true);
@@ -63,4 +76,3 @@ class AdoptionQueryServiceTest {
     private AdoptionApplication app(Long id,Long user,Long animal,String status){AdoptionApplication a=new AdoptionApplication();a.setId(id);a.setUserId(user);a.setAnimalId(animal);a.setStatus(status);return a;}
     private AdoptionRecord record(Long id,Long user){AdoptionRecord r=new AdoptionRecord();r.setId(id);r.setUserId(user);r.setAnimalId(5001L);r.setApplicationId(6001L);r.setAdoptedAt(LocalDateTime.now());return r;}
 }
-

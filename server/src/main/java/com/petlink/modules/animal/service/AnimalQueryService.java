@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class AnimalQueryService {
@@ -32,8 +31,7 @@ public class AnimalQueryService {
         String normalizedSpecies=normalizeOptionalText(species,50);
         String normalizedSex=normalizeSex(sex);
         long offset=(long)(page-1)*size;
-        List<AnimalSummaryResponse> records=animalMapper.selectPublicPage(normalizedSpecies,normalizedSex,size,offset)
-                .stream().map(assembler::summary).collect(Collectors.toList());
+        List<AnimalSummaryResponse> records=assembler.summaries(animalMapper.selectPublicPage(normalizedSpecies,normalizedSex,size,offset));
         return new PageResponse<>(records,page,size,animalMapper.countPublic(normalizedSpecies,normalizedSex));
     }
 
@@ -47,8 +45,7 @@ public class AnimalQueryService {
         validatePage(page,size);
         String normalized=normalizeStatus(status);
         long offset=(long)(page-1)*size;
-        List<AnimalSummaryResponse> records=animalMapper.selectResponsiblePage(principal.getUserId(),normalized,size,offset)
-                .stream().map(assembler::summary).collect(Collectors.toList());
+        List<AnimalSummaryResponse> records=assembler.summaries(animalMapper.selectResponsiblePage(principal.getUserId(),normalized,size,offset));
         return new PageResponse<>(records,page,size,animalMapper.countResponsible(principal.getUserId(),normalized));
     }
 

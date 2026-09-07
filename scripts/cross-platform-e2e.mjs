@@ -15,6 +15,9 @@ const PC = process.env.PETLINK_PC_ORIGIN || 'http://127.0.0.1:5173/api'
 const MOBILE = process.env.PETLINK_MOBILE_ORIGIN || 'http://127.0.0.1:5174/api'
 const BACKEND = process.env.PETLINK_BACKEND_ORIGIN || 'http://127.0.0.1:8080'
 const operatorPassword = process.env.PETLINK_E2E_OPERATOR_PASSWORD
+const adminAccount = process.env.PETLINK_E2E_ADMIN_ACCOUNT || 'admin'
+const rescuerAccount = process.env.PETLINK_E2E_RESCUER_ACCOUNT || 'rescuer'
+const mobileOriginHeader = process.env.PETLINK_E2E_MOBILE_ORIGIN_HEADER || 'http://127.0.0.1:5174'
 
 if (!operatorPassword) {
   console.error('缺少 PETLINK_E2E_OPERATOR_PASSWORD；请传入本机 admin/rescuer 演示密码。')
@@ -88,16 +91,16 @@ await step('后端健康检查', () => {
 
 const mobileCorsLogin = await request(MOBILE, '/auth/login', {
   method: 'POST',
-  body: { account: 'rescuer', password: operatorPassword },
-  originHeader: 'http://127.0.0.1:5174'
+  body: { account: rescuerAccount, password: operatorPassword },
+  originHeader: mobileOriginHeader
 })
 await step('手机端 Origin/CORS 登录', () => {
   const data = expectStatus(mobileCorsLogin, 200, 'mobile CORS login')
   return data.user.roleCode
 })
 
-const admin = await login(PC, 'admin', operatorPassword, 'PC 管理员')
-const rescuer = await login(PC, 'rescuer', operatorPassword, 'PC 救助人员')
+const admin = await login(PC, adminAccount, operatorPassword, 'PC 管理员')
+const rescuer = await login(PC, rescuerAccount, operatorPassword, 'PC 救助人员')
 const registered = await request(MOBILE, '/auth/register', {
   method: 'POST',
   body: { account: userAccount, password: userPassword, nickname: `跨平台验收 ${suffix}`, phone: '13800138000' }

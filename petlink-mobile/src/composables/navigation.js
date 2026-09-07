@@ -20,6 +20,6 @@ export function useNavigation(){
     uni.navigateTo({url:`/pages/${routes[name]}/index${query?'?'+query:''}`})
   }
   function switchMain(name){ uni.redirectTo({url:`/pages/${routes[name]}/index`}) }
-  function requireLogin(name,q={}){ if(!logged.value){ goto('login'); return false } goto(name,q); return true }
+  function requireLogin(name,q={}){ if(!logged.value){ uni.setStorageSync('petlink_mobile_return_to',{name,q});goto('login'); return false } goto(name,q); return true }
   return { goto, switchMain, requireLogin, logged }
 }

@@ -9,7 +9,9 @@ import com.petlink.modules.clue.vo.ClueImageResponse;
 import com.petlink.modules.clue.vo.ClueSummaryResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -21,7 +23,18 @@ public class ClueResponseAssembler {
     }
 
     public ClueSummaryResponse summary(RescueClue clue) {
-        RescueClueImage cover = imageMapper.selectCover(clue.getId());
+        return summary(clue,imageMapper.selectCover(clue.getId()));
+    }
+
+    public List<ClueSummaryResponse> summaries(List<RescueClue> clues) {
+        if (clues.isEmpty()) return List.of();
+        List<Long> clueIds=clues.stream().map(RescueClue::getId).collect(Collectors.toList());
+        Map<Long,RescueClueImage> covers=new HashMap<>();
+        for (RescueClueImage image : imageMapper.selectCovers(clueIds)) covers.put(image.getClueId(),image);
+        return clues.stream().map(clue -> summary(clue,covers.get(clue.getId()))).collect(Collectors.toList());
+    }
+
+    private ClueSummaryResponse summary(RescueClue clue, RescueClueImage cover) {
         String coverUrl = cover == null ? null : imageUrl(cover.getId());
         return new ClueSummaryResponse(
                 String.valueOf(clue.getId()), clue.getLocation(), TimeUtils.toOffset(clue.getFoundTime()),

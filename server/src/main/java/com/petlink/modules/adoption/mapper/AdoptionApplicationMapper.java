@@ -35,11 +35,26 @@ public interface AdoptionApplicationMapper extends BaseMapper<AdoptionApplicatio
             "</script>"})
     long countUser(@Param("userId") Long userId,@Param("status") String status);
 
-    @Select("SELECT * FROM adoption_application WHERE status=#{status} ORDER BY created_at ASC,id ASC LIMIT #{limit} OFFSET #{offset}")
-    List<AdoptionApplication> selectAdminPage(@Param("status") String status,@Param("limit") int limit,@Param("offset") long offset);
+    @Select({"<script>",
+            "SELECT * FROM adoption_application WHERE status=#{status}",
+            "<if test='animalId != null'> AND animal_id=#{animalId}</if>",
+            "<if test='userId != null'> AND user_id=#{userId}</if>",
+            " ORDER BY created_at ASC,id ASC LIMIT #{limit} OFFSET #{offset}",
+            "</script>"})
+    List<AdoptionApplication> selectAdminPage(@Param("status") String status,
+                                               @Param("animalId") Long animalId,
+                                               @Param("userId") Long userId,
+                                               @Param("limit") int limit,
+                                               @Param("offset") long offset);
 
-    @Select("SELECT COUNT(*) FROM adoption_application WHERE status=#{status}")
-    long countAdmin(@Param("status") String status);
+    @Select({"<script>",
+            "SELECT COUNT(*) FROM adoption_application WHERE status=#{status}",
+            "<if test='animalId != null'> AND animal_id=#{animalId}</if>",
+            "<if test='userId != null'> AND user_id=#{userId}</if>",
+            "</script>"})
+    long countAdmin(@Param("status") String status,
+                    @Param("animalId") Long animalId,
+                    @Param("userId") Long userId);
 
     @Update("UPDATE adoption_application SET status='WITHDRAWN',updated_at=#{now} WHERE id=#{id} AND user_id=#{userId} AND status='PENDING'")
     int withdraw(@Param("id") Long id,@Param("userId") Long userId,@Param("now") LocalDateTime now);
@@ -59,4 +74,3 @@ public interface AdoptionApplicationMapper extends BaseMapper<AdoptionApplicatio
     @Select("SELECT * FROM adoption_application WHERE animal_id=#{animalId} AND status='APPROVED' ORDER BY id ASC LIMIT 1")
     AdoptionApplication selectApprovedByAnimal(@Param("animalId") Long animalId);
 }
-

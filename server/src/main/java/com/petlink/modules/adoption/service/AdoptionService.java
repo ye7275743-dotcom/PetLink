@@ -20,10 +20,9 @@ public class AdoptionService {
     public PageResponse<AdoptionApplicationSummaryResponse> myApplications(UserPrincipal p,int page,int size,String status){return query.myApplications(p,page,size,status);}
     public AdoptionApplicationDetailResponse applicationDetail(UserPrincipal p,Long id){return query.applicationDetail(p,id);}
     public AdoptionStateActionResponse withdraw(UserPrincipal p,Long id){return tx.withdraw(p,id);}
-    public PageResponse<AdoptionApplicationSummaryResponse> adminApplications(UserPrincipal p,int page,int size,String status){return query.adminApplications(p,page,size,status);}
+    public PageResponse<AdoptionApplicationSummaryResponse> adminApplications(UserPrincipal p,int page,int size,String status,Long animalId,Long userId){return query.adminApplications(p,page,size,status,animalId,userId);}
     public AdoptionAuditResponse audit(UserPrincipal p,Long id,AdoptionAuditRequest r){return tx.audit(p,id,r);}
     public PageResponse<AdoptionRecordResponse> myRecords(UserPrincipal p,int page,int size){return query.myRecords(p,page,size);}
     public AdoptionRecordResponse recordDetail(UserPrincipal p,Long id){return query.recordDetail(p,id);}
     public AdoptionOverviewResponse overview(UserPrincipal p,Long animalId){return query.overview(p,animalId);}
 }
-

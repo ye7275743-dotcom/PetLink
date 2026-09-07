@@ -8,6 +8,7 @@ CREATE TABLE `announcement` (
     `updated_by` BIGINT UNSIGNED NOT NULL COMMENT '最后更新管理员ID',
     `published_at` DATETIME DEFAULT NULL COMMENT '首次正式发布时间',
     `version` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=已删除',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
@@ -38,7 +39,9 @@ CREATE TABLE `announcement` (
     KEY `idx_announcement_status_published`
         (`status`, `published_at` DESC, `id` DESC),
     KEY `idx_announcement_created`
-        (`created_at` DESC, `id` DESC)
+        (`created_at` DESC, `id` DESC),
+    KEY `idx_announcement_deleted_status_created`
+        (`deleted`, `status`, `created_at` DESC, `id` DESC)
 ) ENGINE=InnoDB
   DEFAULT CHARACTER SET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci

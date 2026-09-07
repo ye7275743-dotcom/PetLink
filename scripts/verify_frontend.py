@@ -23,11 +23,11 @@ for item in pages:
         require("from '../../composables/routeGuard.js'" in source,f'{item["path"]} missing route guard import')
         require(f"useRouteGuard('{page_name}')" in source,f'{item["path"]} missing exact page-level route guard call')
 route_guard=read(f'{M}/composables/routeGuard.js')
-require('onShow(() => enforceMobileRoute(name))' in route_guard,'mobile useRouteGuard is not wired to page onShow')
+require('onShow(async () =>' in route_guard and 'enforceMobileRoute(name)' in route_guard and 'authApi.me()' in route_guard,'mobile route guard must refresh identity onShow before enforcing role')
 
 router=read('petlink-pc/src/router/index.js')
 for name in ['dashboard','clues','tasks','animals','adoptions','adoption-records','followups','announcements','users','profile']:
-    require(f"path:'{name}'" in router,f'missing PC route {name}')
+    require(f"path:'/{name}'" in router,f'missing absolute PC workbench route {name}')
 
 # Domain split / no monolith
 require(not (ROOT/M/'components/ScreenView.vue').exists(),'legacy ScreenView.vue still exists')

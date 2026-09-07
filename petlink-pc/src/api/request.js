@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
 import { useAuth } from '../store/auth.js'
 
 const client = axios.create({
@@ -51,16 +50,19 @@ client.interceptors.response.use(
     }
     return body
   },
-  error => {
+  async error => {
     const status = error.response?.status
     const body = error.response?.data
-    if(status === 401){
+    if(status === 401 || body?.code === 40302){
       useAuth().logout()
       if(location.pathname !== '/login') location.href = '/login'
     }
     // Never expose Axios/browser English such as "Request failed with status code 404".
     const message = safeServerMessage(body?.message, fallbackMessage(error, status))
-    if(status !== 401 && !error.config?.silent) ElMessage.error(message)
+    if(status !== 401 && !error.config?.silent){
+      const { ElMessage } = await import('../plugins/message.js')
+      ElMessage.error(message)
+    }
     const requestId = error.response?.headers?.['x-request-id'] || error.config?.headers?.['X-Request-Id']
     return Promise.reject(Object.assign(error, { code: body?.code, userMessage: message, requestId }))
   }

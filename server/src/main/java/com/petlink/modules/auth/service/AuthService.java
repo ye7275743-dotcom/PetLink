@@ -53,6 +53,10 @@ public class AuthService {
         user.setPhone(phone);
         user.setRoleCode("USER");
         user.setStatus("ENABLED");
+        // Do not depend on the database host's default timezone for new accounts.
+        java.time.LocalDateTime now = java.time.LocalDateTime.now(TimeUtils.ZONE);
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
 
         try {
             userMapper.insert(user);

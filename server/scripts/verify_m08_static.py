@@ -19,14 +19,16 @@ for rel in required: require((base/rel).exists(),f'missing M08 file {rel}')
 controllers='\n'.join(read('src/main/java/com/petlink/modules/admin/controller/'+x) for x in ['AdminUserController.java','AdminSupervisionController.java','AdminStatsController.java'])
 for route in ['/api/admin/users','/{userId}/enable','/{userId}/disable','/{userId}/promote-rescuer','/rescue-tasks','/animals','/adoption-records','/overview','/trends']:
     require(route in controllers,f'missing M08 route fragment {route}')
-require(controllers.count('@GetMapping')==7 and controllers.count('@PostMapping')==3,'M08 endpoint count is not 10')
+require(controllers.count('@GetMapping')==7 and controllers.count('@PostMapping')==4 and controllers.count('@DeleteMapping')==1,'M08 extended endpoint count is not 12')
+require('/{userId}/role' in controllers,'M08 role-change extension missing')
+require('@DeleteMapping("/{userId}")' in controllers,'M08 user deletion endpoint missing')
 require(controllers.count('@PreAuthorize("hasRole(\'ADMIN\')")')==3,'all M08 controller groups must be ADMIN-only')
 
 mapper=read('src/main/java/com/petlink/modules/admin/mapper/AdminMapper.java')
 for token in ['created_at DESC,id DESC','adopted_at DESC,id DESC','finished_at>=#{from}','finished_at<#{toExclusive}',"status='SUCCESS'","GROUP BY DATE_FORMAT(finished_at,'%Y-%m-%d')","GROUP BY DATE_FORMAT(adopted_at,'%Y-%m-%d')"]:
     require(token in mapper,f'AdminMapper missing contract {token}')
 users=read('src/main/java/com/petlink/modules/admin/service/AdminUserService.java')
-for token in ['admin.getUserId().equals(userId)','"SYS_USER",userId,"ENABLE"','"SYS_USER",userId,"DISABLE"','"SYS_USER",userId,"PROMOTE_RESCUER"','mapper.enableUser','mapper.disableUser','mapper.promoteRescuer']:
+for token in ['admin.getUserId().equals(userId)','"SYS_USER",userId,"ENABLE"','"SYS_USER",userId,"DISABLE"','"SYS_USER",userId,"PROMOTE_RESCUER"','"SYS_USER",userId,"DELETE_USER"','mapper.enableUser','mapper.disableUser','mapper.promoteRescuer','mapper.softDeleteUser']:
     require(token in users,f'AdminUserService missing {token}')
 stats=read('src/main/java/com/petlink/modules/admin/service/AdminStatsService.java')
 for token in ['PENDING_REVIEW','WAITING_START','TREATING','INVALIDATED','"DAY"','TimeUtils.ZONE.getId()','to.plusDays(1)','getOrDefault(key,0L)']:
@@ -46,7 +48,7 @@ for stage in range(1,13): require(f'[{stage}/12]' in smoke,f'smoke M08 stage {st
 if errors:
     print('FAILED');print('\n'.join('- '+x for x in errors));sys.exit(1)
 print('M08 static implementation checks: PASSED')
-print('M08 API endpoints: 10')
+print('M08 API endpoints: 12 (10 baseline + role-change + user deletion)')
 print(f'M08-focused @Test: {focused}')
 print(f'Total @Test: {all_tests}')
 print('smoke-m08.ps1 non-ASCII bytes: 0')

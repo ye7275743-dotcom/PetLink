@@ -22,5 +22,7 @@ public class AnnouncementService {
     public AnnouncementAdminDetailResponse adminDetail(UserPrincipal p,Long id){return query.adminDetail(p,id);}
     public AnnouncementAdminDetailResponse patch(UserPrincipal p,Long id,PatchAnnouncementRequest r){return tx.patch(p,id,r);}
     public AnnouncementAdminDetailResponse publish(UserPrincipal p,Long id,AnnouncementVersionRequest r){return tx.publish(p,id,r);}
+    public void delete(UserPrincipal p,Long id,Integer version){tx.delete(p,id,version);}
+    public PageResponse<AnnouncementAdminSummaryResponse> searchAdmin(UserPrincipal p,int page,int size,String status,String keyword){return query.searchAdmin(p,page,size,status,keyword);}
     public AnnouncementAdminDetailResponse withdraw(UserPrincipal p,Long id,AnnouncementVersionRequest r){return tx.withdraw(p,id,r);}
 }

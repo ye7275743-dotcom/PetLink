@@ -1,11 +1,11 @@
 <template>
-  <MobileShell :screen="screen" @reach-bottom="onReachBottom">
+  <MobileShell :screen="screen" :scroll-target="scrollTarget" @reach-bottom="onReachBottom">
     <template v-if="screen==='home'">
       <view class="hero">
-        <view class="hero-copy"><text class="eyebrow light">上海救助手记</text><text class="hero-title">发现需要帮助的它，\n也找到愿意接住它的人</text><text class="hero-sub">每一次救助，都是改变命运的开始。</text><button class="btn primary hero-btn" @click="requireLogin('clue')"><Icon name="send" :size="20" /><text>发布救助线索</text></button></view>
+        <view class="hero-copy"><text class="eyebrow light">让每一份善意，都有回响</text><text class="hero-title">发现需要帮助的它，\n也找到愿意接住它的人</text><text class="hero-sub">每一次救助，都是改变命运的开始。</text><button class="btn primary hero-btn" @click="requireLogin('clue')"><Icon name="send" :size="20" /><text>发布救助线索</text></button></view>
         <view class="hero-visual" aria-hidden="true"><image class="hero-image" src="/static/assets/petlink-rescue-hero-v1.jpg" mode="aspectFill" /></view>
       </view>
-      <view class="title">等待一个家的它们</view>
+      <view class="home-shortcuts"><button class="btn primary" @click="browseAnimals"><Icon name="heart" :size="24"/>我要领养</button><button class="btn" @click="requireLogin('clue')"><Icon name="pin" :size="24"/>发布线索</button><button v-if="isRescuer" class="btn" @click="goto('tasks')"><Icon name="tasks" :size="24"/>救助任务</button></view><view id="adopt-list" class="title">等待一个家的它们</view>
       <view class="filter-bar">
         <picker :range="speciesOptions.map(x=>x?displayText(x):'全部')" @change="species=speciesOptions[$event.detail.value];reloadHome()"><view class="filter-item">物种：{{species?displayText(species):'全部'}}</view></picker>
         <picker :range="sexOptions.map(x=>x?displayText(x):'全部')" @change="sex=sexOptions[$event.detail.value];reloadHome()"><view class="filter-item">性别：{{sex?displayText(sex):'全部'}}</view></picker>
@@ -16,7 +16,7 @@
           <view class="grow"><text class="card-title">{{a.name}}</text><text class="muted">{{displayText(a.species)}} · {{displayText(a.sex)}} · {{age(a.estimatedAgeMonths)}}</text><view class="health"><Icon name="heart" :size="18" /><text>{{a.healthCondition}}</text></view><view class="actions"><button class="btn" @click="goto('animal',{id:a.id})"><Icon name="eye" :size="18" /><text>查看档案</text></button><button v-if="logged" class="btn primary" :disabled="favoriteBusy===a.id" @click="favorite(a)"><Icon name="heart" :size="18" />{{favoriteBusy===a.id?'处理中…':'收藏'}}</button></view></view>
         </view>
       </PageState>
-      <view class="guide"><text class="eyebrow">救助指南</text><text class="card-title">第一次参与救助？</text><text class="muted">安全接近、现场记录、联系救助站，一步步陪你完成。</text></view>
+      <view class="card"><view class="title">最新公告</view><text v-if="noticeError" class="muted">{{noticeError}}</text><view v-for="n in homeNotices" :key="n.id" class="home-notice" @click="goto('announcementDetail',{id:n.id})"><text class="card-title">{{n.title}}</text><text class="muted">阅读全文 →</text></view><button class="btn wide" @click="goto('announcements')">查看全部公告</button></view><view class="guide"><text class="eyebrow">参与指南</text><text class="card-title">第一次参与救助？</text><text class="muted">安全接近、现场记录、及时求助，一步步陪你完成。</text><button class="btn" @click="guideOpen=!guideOpen">{{guideOpen?'收起指南':'查看参与步骤'}}</button><view v-if="guideOpen" class="guide-steps"><text>1. 先确保自身安全，不追赶或强行接触动物。</text><text>2. 拍摄现场照片，记录准确地点与发现时间，提交救助线索。</text><text>3. 工作人员审核后由救助人员接取，可在“线索”页关注进展。</text><text>4. 领养前了解动物健康及照护需求，获批领养后通过回访分享近况。</text></view></view>
     </template>
 
     <template v-else-if="screen==='animal'">
@@ -29,7 +29,7 @@
     </template>
 
     <template v-else-if="screen==='responsibleAnimals'">
-      <BackButton/><view class="title">我负责的动物 · 第四模块</view>
+      <BackButton/><view class="title">我负责的动物</view>
       <PageState :loading="responsible.loading.value" :error="responsible.error.value" :empty="!responsible.records.value.length" :has-data="!!responsible.records.value.length" :loading-more="responsible.loadingMore.value" :has-more="responsible.hasMore.value" @retry="responsible.retry">
         <view v-for="a in responsible.records.value" :key="a.id" class="card archive"><AuthImage class="thumb" :src="a.coverImageUrl" fallback="/static/assets/pudding-cat-hero.png" mode="aspectFill"/><view class="grow"><text class="card-title">{{a.name}}</text><text class="muted">来源任务 #{{a.rescueTaskId||'—'}}</text><StatusBadge :value="a.status"/><view class="actions"><button class="btn" @click="goto('animalManage',{id:a.id})">管理档案</button><button class="btn" @click="goto('adoptionOverview',{id:a.id})">领养情况</button></view></view></view>
       </PageState>
@@ -50,15 +50,19 @@
         </view>
         <view class="card"><text class="title">动物图片</text><ImagePicker v-model="animalTokens"/><button class="btn" :disabled="!animalTokens.length||imageSubmit.submitting.value" @click="addAnimalImages"><Icon name="plus" :size="18" />{{imageSubmit.submitting.value?'处理中…':'追加图片'}}</button><view class="photo-grid"><view v-for="im in animal?.images||[]" :key="im.id" class="photo"><AuthImage class="photo-img" :src="im.url" mode="aspectFill"/><button class="mini danger" :disabled="imageSubmit.submitting.value" aria-label="删除图片" @click="deleteAnimalImage(im)"><Icon name="trash" :size="18" /></button></view></view></view>
         <view class="card"><text class="title">健康记录</text><view v-for="h in health" :key="h.id" class="timeline">{{h.content}}<text class="muted">{{h.createdAt}}</text></view><textarea v-model="healthText" class="input area" placeholder="追加健康记录，最多 2000 字"/><text v-if="healthError" class="inline-error">{{healthError}}</text><button class="btn" :disabled="healthSubmit.submitting.value" @click="addHealth">{{healthSubmit.submitting.value?'提交中…':'追加健康记录'}}</button></view>
-        <view v-if="animal" class="card"><text class="title">状态操作</text><view class="notice">“已领养”状态只能由领养批准事务产生。</view><button v-if="animal.status==='TREATING'" class="btn" :disabled="stateSubmit.submitting.value" @click="animalState('TO_OBSERVING')">进入观察</button><button v-if="animal.status==='OBSERVING'" class="btn primary" :disabled="stateSubmit.submitting.value" @click="animalState('OPEN_ADOPTION')">开放领养</button><button v-if="animal.status==='AVAILABLE'" class="btn danger" :disabled="stateSubmit.submitting.value" @click="suspendAnimal">暂停领养</button><button v-if="animal.status==='SUSPENDED'" class="btn primary" :disabled="stateSubmit.submitting.value" @click="animalState('RESUME_ADOPTION')">恢复领养</button></view>
+        <view v-if="animal" class="card"><text class="title">状态操作</text><view class="notice">领养申请获批后，系统会自动更新领养状态。</view><button v-if="animal.status==='TREATING'" class="btn" :disabled="stateSubmit.submitting.value" @click="animalState('TO_OBSERVING')">进入观察</button><button v-if="animal.status==='OBSERVING'" class="btn primary" :disabled="stateSubmit.submitting.value" @click="animalState('OPEN_ADOPTION')">开放领养</button><button v-if="animal.status==='AVAILABLE'" class="btn danger" :disabled="stateSubmit.submitting.value" @click="suspendAnimal">暂停领养</button><button v-if="animal.status==='SUSPENDED'" class="btn primary" :disabled="stateSubmit.submitting.value" @click="animalState('RESUME_ADOPTION')">恢复领养</button></view>
       </PageState>
     </template>
   </MobileShell>
 </template>
 <script setup>
-import {ref,reactive,onMounted} from 'vue'
+import {ref,reactive,onMounted,computed,nextTick} from 'vue'
+import {useAuth} from '../../store/auth.js'
 import MobileShell from '../../components/MobileShell.vue';import PageState from '../../components/PageState.vue';import AuthImage from '../../components/AuthImage.vue';import BackButton from '../../components/BackButton.vue';import StatusBadge from '../../components/StatusBadge.vue';import FormField from '../../components/FormField.vue';import ImagePicker from '../../components/ImagePicker.vue';import Icon from '../../components/Icon.vue'
 import {animalApi,contentApi} from '../../api/index.js';import {useNavigation} from '../../composables/navigation.js';import {usePagedList} from '../../composables/pagedList.js';import {useAsyncState,useSubmit} from '../../composables/asyncState.js';import {currentPageParams} from '../../composables/routeParams.js';import {textRule} from '../../composables/validation.js';import {displayText} from '../../utils/displayText.js'
+const homeNotices=ref([]),noticeError=ref(''),guideOpen=ref(false),scrollTarget=ref('');const isRescuer=computed(()=>useAuth().state.user?.roleCode==='RESCUER')
+async function browseAnimals(){scrollTarget.value='';await nextTick();scrollTarget.value='adopt-list'}
+async function loadNotices(){try{homeNotices.value=(await contentApi.announcements({page:1,size:3})).records||[]}catch{noticeError.value='公告暂时无法加载，可进入公告页重试'}}
 const props=defineProps({screen:{type:String,required:true}});const screen=props.screen;const params=currentPageParams();const {goto,requireLogin,logged}=useNavigation();const speciesOptions=['','CAT','DOG','OTHER'];const sexOptions=['','MALE','FEMALE','UNKNOWN'];const species=ref(''),sex=ref(''),favoriteBusy=ref(null)
 const home=usePagedList(q=>animalApi.list(q),{pageSize:20});const responsible=usePagedList(q=>animalApi.responsible(q),{pageSize:20});const detailState=useAsyncState();const animal=ref(null),health=ref([]);const animalEdit=reactive({name:'',species:'',sex:'UNKNOWN',estimatedAgeMonths:null,color:'',healthCondition:''});const animalTokens=ref([]),healthText=ref(''),healthError=ref('');const manageSubmit=useSubmit(),imageSubmit=useSubmit(),healthSubmit=useSubmit(),stateSubmit=useSubmit();const animalErrors=reactive({name:'',species:'',healthCondition:''})
 function age(m){return m==null?'年龄未知':m<12?`${m}个月`:`${Math.floor(m/12)}岁${m%12?m%12+'个月':''}`}
@@ -74,6 +78,7 @@ async function addHealth(){healthError.value=textRule(healthText.value,{label:'�
 async function animalState(action,extra={}){await stateSubmit.submit(async()=>{await animalApi.status(params.id,{action,version:animal.value.version,...extra});await loadAnimalManage()})}
 function suspendAnimal(){uni.showModal({title:'暂停领养',editable:true,placeholderText:'请输入暂停原因',success:r=>{if(r.confirm){const reason=String(r.content||'').trim();if(!reason||reason.length>500){uni.showToast({title:'暂停原因需为 1～500 字',icon:'none'});return}animalState('SUSPEND_ADOPTION',{suspendReason:reason})}}})}
 function onReachBottom(){if(screen==='home')home.loadMore();else if(screen==='responsibleAnimals')responsible.loadMore()}
-async function initialize(){if(screen==='home')await reloadHome();else if(screen==='animal')await loadAnimal();else if(screen==='responsibleAnimals')await responsible.refresh();else if(screen==='animalManage')await loadAnimalManage()}
+async function initialize(){if(screen==='home'){await Promise.all([reloadHome(),loadNotices()])}else if(screen==='animal')await loadAnimal();else if(screen==='responsibleAnimals')await responsible.refresh();else if(screen==='animalManage')await loadAnimalManage()}
 onMounted(()=>{void initialize().catch(()=>{})})
 </script>
+<style scoped>.home-shortcuts{display:flex;gap:16rpx;margin:26rpx 0 40rpx;flex-wrap:wrap}.home-shortcuts .btn{flex:1;min-width:160rpx;display:flex;align-items:center;justify-content:center;gap:12rpx;min-height:94rpx}.home-notice{padding:22rpx 0;border-bottom:1px solid #dedfce}.home-notice .muted{display:block;margin-top:8rpx}.guide .btn{margin-top:20rpx}.guide-steps{display:grid;gap:20rpx;margin-top:24rpx;font-size:26rpx;line-height:1.9;color:#566e61}</style>

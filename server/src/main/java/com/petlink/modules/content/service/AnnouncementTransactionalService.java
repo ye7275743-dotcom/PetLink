@@ -57,6 +57,17 @@ public class AnnouncementTransactionalService {
         return assembler.adminDetail(required(id));
     }
 
+    @Transactional
+    public void delete(UserPrincipal admin,Long id,Integer version){
+        AnnouncementQueryService.requireAdmin(admin);AnnouncementQueryService.requireId(id);
+        if(version==null||version<0)throw invalid();
+        Announcement a=mapper.lockActive(id);
+        if(a==null)throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);
+        if(!version.equals(a.getVersion()))throw new BusinessException(ErrorCode.OPTIMISTIC_LOCK_CONFLICT);
+        if(mapper.softDelete(id,version,admin.getUserId(),LocalDateTime.now(TimeUtils.ZONE))!=1)throw new BusinessException(ErrorCode.OPTIMISTIC_LOCK_CONFLICT);
+        logs.append("ANNOUNCEMENT",id,"DELETE_ANNOUNCEMENT",a.getStatus(),"DELETED",admin.getUserId(),"管理员确认删除公告");
+    }
+
     private Integer version(AnnouncementVersionRequest request){if(request==null||request.getVersion()==null||request.getVersion()<0)throw invalid();return request.getVersion();}
     private void resolveFailure(Long id,String expected,Integer version){Announcement a=mapper.selectById(id);if(a==null)throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);boolean stateOk="DRAFT_OR_PUBLISHED".equals(expected)?("DRAFT".equals(a.getStatus())||"PUBLISHED".equals(a.getStatus())):expected.equals(a.getStatus());if(!stateOk)throw new BusinessException(ErrorCode.BUSINESS_STATE_CONFLICT);if(!version.equals(a.getVersion()))throw new BusinessException(ErrorCode.OPTIMISTIC_LOCK_CONFLICT);throw new BusinessException(ErrorCode.BUSINESS_STATE_CONFLICT);}
     private Announcement required(Long id){Announcement a=mapper.selectById(id);if(a==null)throw new IllegalStateException("announcement disappeared");return a;}

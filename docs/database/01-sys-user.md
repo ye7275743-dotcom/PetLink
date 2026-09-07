@@ -11,7 +11,7 @@ public class User {
 }
 ```
 
-V1.0 不建立角色关联表，不删除用户记录。
+V1.0 不建立角色关联表。产品化扩展允许 ADMIN 逻辑删除非管理员用户，历史业务和审计关联仍保留。
 
 ## 2. 数据字典
 
@@ -24,6 +24,7 @@ V1.0 不建立角色关联表，不删除用户记录。
 | `phone` | `VARCHAR(20)`, ASCII BIN | 是 | `NULL` | CHECK | 联系手机号，不作为登录账号且不要求唯一 |
 | `role_code` | `VARCHAR(20)`, ASCII BIN | 否 | `USER` | CHECK | `USER / RESCUER / ADMIN` |
 | `status` | `VARCHAR(20)`, ASCII BIN | 否 | `ENABLED` | CHECK | `ENABLED / DISABLED` |
+| `deleted` | `TINYINT` | 否 | `0` | INDEX | 逻辑删除标记：`0` 正常，`1` 已删除 |
 | `created_at` | `DATETIME` | 否 | `CURRENT_TIMESTAMP` | — | 创建时间 |
 | `updated_at` | `DATETIME` | 否 | `CURRENT_TIMESTAMP` | 自动更新 | 最后更新时间 |
 
@@ -86,6 +87,8 @@ DISABLED → 拒绝登录和后续受保护业务操作
 
 系统处理受保护请求时必须检查账号当前状态，不能只依赖尚未过期的旧 JWT。
 
+逻辑删除用户会同时置为 `DISABLED`；旧 JWT 立即失效，新登录与后台普通查询不再返回该用户。管理员、当前操作人及尚有活动救助任务的用户不允许删除。账号唯一约束保留，已删除账号不得重新注册，避免历史身份被冒用。
+
 ## 4. 初始管理员
 
 公开注册接口不得创建 `ADMIN`。初始管理员由部署初始化脚本直接创建：
@@ -133,6 +136,7 @@ CONSTRAINT chk_sys_user_status
 CHECK (status IN ('ENABLED', 'DISABLED'))
 
 KEY idx_sys_user_role_status (role_code, status)
+KEY idx_sys_user_deleted_role_status (deleted, role_code, status)
 ```
 
 > **`sys_user` 表 V1.0 — Frozen**

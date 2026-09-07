@@ -2,20 +2,20 @@
   <view class="app-shell-mobile">
     <NetworkStatus />
     <view class="statusbar">
-      <view class="status-brand"><view class="status-led" /><text>PETLINK CARE</text></view>
+      <view class="status-brand"><view class="status-led" /><text>宠链公益</text></view>
       <text class="status-role">{{ roleText(role||'VISITOR') }}</text>
     </view>
     <view class="mobile-header">
       <view class="brand-lockup">
         <view class="brand-mark"><Icon name="spark" :size="22" /></view>
-        <view class="logo">宠链<text>救助与领养</text></view>
+        <view class="logo"><view class="brand-names"><text class="brand-cn">宠链</text><text class="brand-en">PetLink</text></view><text>救助与领养</text></view>
       </view>
       <view class="header-meta">
-        <text class="header-kicker">CARE NETWORK</text>
+        <text class="header-kicker">关爱每个生命</text>
         <view class="role-chip"><view class="role-dot" />{{ roleText(role||'VISITOR') }}</view>
       </view>
     </view>
-    <scroll-view class="mobile-content" scroll-y :show-scrollbar="false" @scrolltolower="$emit('reach-bottom')">
+    <scroll-view :scroll-into-view="scrollTarget" scroll-with-animation class="mobile-content" scroll-y :show-scrollbar="false" @scrolltolower="$emit('reach-bottom')">
       <slot />
       <view class="safe-bottom-spacer" />
     </scroll-view>
@@ -35,7 +35,7 @@ import { useNavigation } from '../composables/navigation.js'
 import { roleText } from '../utils/displayText.js'
 import Icon from './Icon.vue'
 import NetworkStatus from './NetworkStatus.vue'
-defineProps({screen:{type:String,required:true}})
+defineProps({screen:{type:String,required:true},scrollTarget:{type:String,default:''}})
 defineEmits(['reach-bottom'])
 const auth=useAuth(); const user=computed(()=>auth.state.user); const role=computed(()=>user.value?.roleCode)
 const {switchMain,requireLogin}=useNavigation()
@@ -275,4 +275,5 @@ const mainScreens=['home','clue','tasks','records','profile']
 .bottom-nav button::after {
   border: 0;
 }
+.brand-names{display:flex;align-items:baseline;gap:10rpx}.logo .brand-cn{margin:0;color:#102f2d;font:700 36rpx/1 "Songti SC","STSong",serif;letter-spacing:-1rpx}.logo .brand-en{margin:0;color:#102f2d;font:italic 600 34rpx/1 "Baskerville",Georgia,serif;letter-spacing:-1.4rpx}
 </style>

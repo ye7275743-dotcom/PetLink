@@ -24,10 +24,27 @@ test('PC premium visual layer keeps depth and branded surfaces', () => {
   assert.match(styles, /\.hero-panel::after/)
 })
 
-test('PC dashboard and login consume the generated rescue hero asset', () => {
-  assert.match(dashboard, /petlink-rescue-hero-v1\.jpg/)
+test('PC public home and login consume generated rescue hero assets', () => {
+  const publicHome=readFileSync(new URL('../src/views/PublicView.vue',import.meta.url),'utf8')
+  assert.match(publicHome, /petlink-home-hero-v2\.webp/)
+  assert.match(publicHome, /fetchpriority="high"/)
+  assert.match(dashboard,/work-metrics/)
+  assert.match(dashboard,/待处理事项/)
   assert.match(login, /petlink-rescue-hero-v1\.jpg/)
+  assert.ok(existsSync(new URL('../public/assets/petlink-home-hero-v2.webp', import.meta.url)))
   assert.ok(existsSync(new URL('../public/assets/petlink-rescue-hero-v1.jpg', import.meta.url)))
+})
+
+test('public home stays independent from the workbench component library', () => {
+  const publicHome=readFileSync(new URL('../src/views/PublicView.vue',import.meta.url),'utf8')
+  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8')
+  const router=readFileSync(new URL('../src/router/index.js',import.meta.url),'utf8')
+  assert.doesNotMatch(publicHome, /<el-|v-loading/)
+  assert.doesNotMatch(main, /ElementPlus from|element-plus\/dist\/index\.css/)
+  assert.match(router, /const LoginView=\(\)=>import/)
+  assert.match(router, /const AdminLayout=\(\)=>import/)
+  assert.match(router, /scrollBehavior/)
+  assert.match(router, /return \{top:0\}/)
 })
 
 test('PC navigation uses the shared semantic SVG icon dictionary', () => {

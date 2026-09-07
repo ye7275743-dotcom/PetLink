@@ -10,13 +10,13 @@ import java.util.Set;
 @Service
 public class OperationLogService {
     private static final Map<String, Set<String>> ALLOWED_OPERATIONS = Map.of(
-            "SYS_USER", Set.of("ENABLE", "DISABLE", "PROMOTE_RESCUER"),
+            "SYS_USER", Set.of("ENABLE", "DISABLE", "PROMOTE_RESCUER", "DEMOTE_RESCUER","DELETE_USER"),
             "RESCUE_CLUE", Set.of("CREATE", "WITHDRAW", "AUDIT_APPROVE", "AUDIT_REJECT",
                     "ACCEPT_RESCUE", "REOPEN", "CLOSE_AFTER_RESCUE", "CLOSE_AFTER_FAILURE"),
             "RESCUE_TASK", Set.of("START_RESCUE", "COMPLETE_RESCUE", "RESCUE_FAILED", "CANCEL_RESCUE"),
             "ANIMAL", Set.of("TO_OBSERVING", "OPEN_ADOPTION", "SUSPEND_ADOPTION", "RESUME_ADOPTION", "ADOPT"),
             "ADOPTION_APPLICATION", Set.of("CREATE", "WITHDRAW", "AUDIT_APPROVE", "AUDIT_REJECT", "AUTO_INVALIDATE"),
-            "ANNOUNCEMENT", Set.of("CREATE", "PUBLISH", "WITHDRAW")
+            "ANNOUNCEMENT", Set.of("CREATE", "PUBLISH", "WITHDRAW", "DELETE_ANNOUNCEMENT")
     );
 
     private final OperationLogMapper mapper;

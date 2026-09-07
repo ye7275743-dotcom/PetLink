@@ -15,7 +15,7 @@
   </div>
 </template>
 <script setup>
-import { ref,watch,onBeforeUnmount } from 'vue'; import { authApi } from '../api/index.js'; import { ElMessage } from 'element-plus'
+import { ref,watch,onBeforeUnmount } from 'vue'; import { authApi } from '../api/index.js'; import { ElMessage } from '../plugins/message.js'
 const props=defineProps({modelValue:{type:Array,default:()=>[]},max:{type:Number,default:9}}); const emit=defineEmits(['update:modelValue']); const items=ref([])
 watch(()=>props.modelValue,(tokens)=>{const known=new Set(items.value.map(i=>i.token).filter(Boolean));for(const token of tokens){if(!known.has(token))items.value.push({key:token,token,status:'done',progress:100,preview:'',file:null,error:''})}items.value=items.value.filter(i=>!i.token||tokens.includes(i.token))},{immediate:true,deep:true})
 function sync(){emit('update:modelValue',items.value.filter(i=>i.status==='done'&&i.token).map(i=>i.token))}

@@ -16,6 +16,7 @@
 | `updated_by` | `BIGINT UNSIGNED` | 否 | — | FK | 最后修改、发布或撤回的 ADMIN |
 | `published_at` | `DATETIME` | 是 | `NULL` | CHECK | 首次正式发布时间 |
 | `version` | `INT UNSIGNED` | 否 | `0` | 乐观锁 | 每次内容或状态更新递增 |
+| `deleted` | `TINYINT` | 否 | `0` | INDEX | 逻辑删除标记：`0` 正常，`1` 已删除 |
 | `created_at` | `DATETIME` | 否 | `CURRENT_TIMESTAMP` | — | 创建时间 |
 | `updated_at` | `DATETIME` | 否 | `CURRENT_TIMESTAMP` | 自动更新 | 最后更新时间 |
 
@@ -62,6 +63,8 @@ PUBLISHED / WITHDRAWN
 ```
 
 `published_at` 保存首次正式发布时间，撤回时不清空。不增加 `withdrawn_at`；撤回时间由终态记录的 `updated_at` 与 `OperationLog.created_at` 追踪。
+
+ADMIN 可在携带当前 `version` 后逻辑删除公告。删除后后台列表、公开列表与详情均不再可见，操作记入 `DELETE_ANNOUNCEMENT` 审计日志。
 
 ## 6. 乐观锁与状态更新
 
@@ -122,6 +125,6 @@ KEY idx_announcement_created
 
 ## 10. 外键与删除策略
 
-`created_by / updated_by` 均使用 `ON UPDATE RESTRICT / ON DELETE RESTRICT`。公告不物理删除；通过 `WITHDRAWN` 终态保留历史。
+`created_by / updated_by` 均使用 `ON UPDATE RESTRICT / ON DELETE RESTRICT`。公告不物理删除；`WITHDRAWN` 表示业务撤回，`deleted=1` 表示从产品界面删除，两者语义分离。
 
 > **`announcement` 表 V1.0 — Frozen**

@@ -12,6 +12,8 @@ import java.util.List;
 
 @Mapper
 public interface RescueTaskMapper extends BaseMapper<RescueTask> {
+    @Select("SELECT id FROM sys_user WHERE deleted=0 AND id=#{id} AND role_code='RESCUER' AND status='ENABLED' FOR UPDATE")
+    Long lockEnabledRescuer(@Param("id") Long id);
     @Select("SELECT * FROM rescue_task WHERE id=#{id} FOR UPDATE")
     RescueTask selectForUpdate(@Param("id") Long id);
 

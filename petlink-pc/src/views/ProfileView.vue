@@ -24,7 +24,7 @@
 
       <el-divider />
       <h3 class="section-title">编辑资料</h3>
-      <p class="muted help">仅可修改昵称和手机号；账号、角色、状态等受保护字段不可在此页面修改。</p>
+      <p class="muted help">可在这里更新昵称和联系方式。需要调整救助资格，请联系管理员。</p>
       <el-form label-position="top" @submit.prevent="save">
         <div class="form-grid">
           <el-form-item label="昵称" :error="errors.nickname">
@@ -42,7 +42,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from '../plugins/message.js'
 import PageHeader from '../components/PageHeader.vue'
 import ListError from '../components/ListError.vue'
 import { authApi } from '../api/index.js'

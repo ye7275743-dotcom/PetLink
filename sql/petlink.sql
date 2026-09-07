@@ -64,6 +64,9 @@ CREATE TABLE `sys_user` (
         DEFAULT 'ENABLED'
         COMMENT '账号状态：ENABLED/DISABLED',
 
+    `deleted` TINYINT NOT NULL DEFAULT 0
+        COMMENT '逻辑删除：0=正常，1=已删除',
+
     `created_at` DATETIME NOT NULL
         DEFAULT CURRENT_TIMESTAMP
         COMMENT '创建时间',
@@ -103,7 +106,10 @@ CREATE TABLE `sys_user` (
         CHECK (`status` IN ('ENABLED', 'DISABLED')),
 
     KEY `idx_sys_user_role_status`
-        (`role_code`, `status`)
+        (`role_code`, `status`),
+
+    KEY `idx_sys_user_deleted_role_status`
+        (`deleted`, `role_code`, `status`)
 
 ) ENGINE=InnoDB
   DEFAULT CHARACTER SET=utf8mb4
@@ -428,6 +434,7 @@ CREATE TABLE `animal` (
         COMMENT 'TREATING/OBSERVING/AVAILABLE/SUSPENDED/ADOPTED',
     `suspend_reason` VARCHAR(500) DEFAULT NULL COMMENT '暂停领养原因',
     `version` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=已删除',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '建档时间',
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -800,7 +807,9 @@ CREATE TABLE `announcement` (
     KEY `idx_announcement_status_published`
         (`status`, `published_at` DESC, `id` DESC),
     KEY `idx_announcement_created`
-        (`created_at` DESC, `id` DESC)
+        (`created_at` DESC, `id` DESC),
+    KEY `idx_announcement_deleted_status_created`
+        (`deleted`, `status`, `created_at` DESC, `id` DESC)
 ) ENGINE=InnoDB
   DEFAULT CHARACTER SET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci

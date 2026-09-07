@@ -45,7 +45,9 @@ Java 层固定校验以下组合：
 SYS_USER
 ├─ ENABLE
 ├─ DISABLE
-└─ PROMOTE_RESCUER
+├─ PROMOTE_RESCUER
+├─ DEMOTE_RESCUER
+└─ DELETE_USER
 
 RESCUE_CLUE
 ├─ CREATE
@@ -80,7 +82,8 @@ ADOPTION_APPLICATION
 ANNOUNCEMENT
 ├─ CREATE
 ├─ PUBLISH
-└─ WITHDRAW
+├─ WITHDRAW
+└─ DELETE_ANNOUNCEMENT
 ```
 
 数据库不对 `operation_type` 做长枚举 CHECK，只保证非空白；Service 必须验证 `business_type + operation_type` 的合法组合。V1.0 不再使用 `MARK_FAILED / APPROVE / REJECT` 等旧候选名称。

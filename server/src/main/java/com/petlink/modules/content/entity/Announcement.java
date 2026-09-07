@@ -10,6 +10,10 @@ import java.time.LocalDateTime;
 public class Announcement {
     @TableId(type = IdType.AUTO)
     private Long id;
+    @com.baomidou.mybatisplus.annotation.TableLogic
+    private Integer deleted = 0;
+    public Integer getDeleted(){return deleted;}
+    public void setDeleted(Integer deleted){this.deleted=deleted;}
     private String title;
     private String content;
     private String status;

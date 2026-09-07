@@ -47,6 +47,7 @@ public class AdminStatsService {
         AdminUserService.requireAdmin(admin);
         if(!"DAY".equals(granularity))throw new BusinessException(ErrorCode.INVALID_PARAMETER);
         LocalDate from=parseDate(fromRaw);LocalDate to=parseDate(toRaw);
+        if(java.time.temporal.ChronoUnit.DAYS.between(from,to)>365)throw new BusinessException(ErrorCode.INVALID_PARAMETER,"查询范围不能超过 366 天");
         if(from.isAfter(to))throw new BusinessException(ErrorCode.INVALID_PARAMETER);
         LocalDateTime start;LocalDateTime end;
         try{start=from.atStartOfDay();end=to.plusDays(1).atStartOfDay();}catch(DateTimeException ex){throw new BusinessException(ErrorCode.INVALID_PARAMETER);}

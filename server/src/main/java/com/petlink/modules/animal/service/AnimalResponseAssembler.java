@@ -14,7 +14,10 @@ import com.petlink.modules.animal.vo.HealthRecordResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class AnimalResponseAssembler {
@@ -26,7 +29,18 @@ public class AnimalResponseAssembler {
     }
 
     public AnimalSummaryResponse summary(Animal animal) {
-        AnimalImage cover=imageMapper.selectCover(animal.getId());
+        return summary(animal,imageMapper.selectCover(animal.getId()));
+    }
+
+    public List<AnimalSummaryResponse> summaries(List<Animal> animals) {
+        if (animals.isEmpty()) return List.of();
+        List<Long> animalIds=animals.stream().map(Animal::getId).collect(Collectors.toList());
+        Map<Long,AnimalImage> covers=new HashMap<>();
+        for (AnimalImage image : imageMapper.selectCovers(animalIds)) covers.put(image.getAnimalId(),image);
+        return animals.stream().map(animal -> summary(animal,covers.get(animal.getId()))).collect(Collectors.toList());
+    }
+
+    private AnimalSummaryResponse summary(Animal animal, AnimalImage cover) {
         return new AnimalSummaryResponse(String.valueOf(animal.getId()),animal.getName(),animal.getSpecies(),animal.getSex(),
                 animal.getEstimatedAgeMonths(),animal.getColor(),animal.getHealthCondition(),animal.getStatus(),
                 cover == null ? null : mediaUrl(cover.getId()),animal.getVersion(),

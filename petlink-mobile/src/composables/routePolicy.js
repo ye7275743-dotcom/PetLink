@@ -1,5 +1,5 @@
 const PUBLIC_ROUTES = new Set([
-  'home','animal','announcements','announcementDetail','login','register'
+  'home','animal','announcements','announcementDetail','login','register','profile'
 ])
 
 const RESCUER_ONLY_ROUTES = new Set([

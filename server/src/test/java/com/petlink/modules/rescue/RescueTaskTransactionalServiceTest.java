@@ -41,6 +41,7 @@ class RescueTaskTransactionalServiceTest {
 
     @BeforeEach void setUp(){
         taskMapper=mock(RescueTaskMapper.class); recordMapper=mock(RescueRecordMapper.class); clueMapper=mock(RescueClueMapper.class);
+        when(taskMapper.lockEnabledRescuer(anyLong())).thenAnswer(i->i.getArgument(0));
         animalMapper=mock(AnimalMapper.class); healthMapper=mock(HealthRecordMapper.class); fileBinding=mock(AnimalFileBindingService.class);
         logs=mock(OperationLogService.class); assembler=mock(RescueTaskResponseAssembler.class); normalizer=new RescueRequestNormalizer();
         service=new RescueTaskTransactionalService(taskMapper,recordMapper,clueMapper,animalMapper,healthMapper,fileBinding,logs,assembler,normalizer);
@@ -59,7 +60,7 @@ class RescueTaskTransactionalServiceTest {
     @Test void acceptAlreadyChangedIs409(){
         when(clueMapper.acceptForRescue(3001L)).thenReturn(0); RescueClue c=clue(3001L,"CONVERTED"); when(clueMapper.selectById(3001L)).thenReturn(c);
         assertEquals(ErrorCode.BUSINESS_STATE_CONFLICT,assertThrows(BusinessException.class,()->service.accept(2001L,3001L)).getErrorCode());
-        verifyNoInteractions(taskMapper,logs);
+        verify(taskMapper).lockEnabledRescuer(2001L);verify(taskMapper,never()).insert(any());verifyNoInteractions(logs);
     }
 
     @Test void startWritesFrozenTaskLog(){

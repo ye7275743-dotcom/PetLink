@@ -82,5 +82,7 @@ test('all 29 UniApp pages register the page-level route guard on onShow', () => 
 
   const guardSource = fs.readFileSync(new URL('../src/composables/routeGuard.js', import.meta.url), 'utf8')
   assert.match(guardSource, /export function useRouteGuard\(name\)/)
-  assert.match(guardSource, /onShow\(\(\)\s*=>\s*enforceMobileRoute\(name\)\)/)
+  assert.match(guardSource, /onShow\(async/)
+  assert.match(guardSource, /await authApi.me\(\)/)
+  assert.match(guardSource, /enforceMobileRoute\(name\)/)
 })

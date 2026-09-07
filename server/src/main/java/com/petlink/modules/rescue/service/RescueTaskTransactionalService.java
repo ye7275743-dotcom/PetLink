@@ -58,6 +58,7 @@ public class RescueTaskTransactionalService {
     @Transactional
     public AcceptTaskResponse accept(Long rescuerId, Long clueId) {
         if (clueId == null || clueId <= 0) throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);
+        if (taskMapper.lockEnabledRescuer(rescuerId)==null) throw new BusinessException(ErrorCode.FORBIDDEN,"账号权限已变化，请刷新后重试");
         int rows=clueMapper.acceptForRescue(clueId);
         if (rows != 1) {
             RescueClue clue=clueMapper.selectById(clueId);

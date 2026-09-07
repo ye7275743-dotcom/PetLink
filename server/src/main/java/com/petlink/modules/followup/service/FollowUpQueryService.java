@@ -47,7 +47,7 @@ public class FollowUpQueryService {
     public PageResponse<FollowUpRecordResponse> adminPage(UserPrincipal principal,int page,int size,Long animalId,Long userId,Long adoptionRecordId){
         requireAdmin(principal);validatePage(page,size);validateOptionalId(animalId);validateOptionalId(userId);validateOptionalId(adoptionRecordId);
         long offset=(long)(page-1)*size;
-        List<FollowUpRecordResponse> rows=recordMapper.selectAdminPage(animalId,userId,adoptionRecordId,size,offset).stream().map(assembler::record).collect(Collectors.toList());
+        List<FollowUpRecordResponse> rows=assembler.records(recordMapper.selectAdminPage(animalId,userId,adoptionRecordId,size,offset));
         return new PageResponse<>(rows,page,size,recordMapper.countAdmin(animalId,userId,adoptionRecordId));
     }
 
@@ -55,7 +55,7 @@ public class FollowUpQueryService {
         requireRescuer(principal);validatePage(page,size);validateOptionalId(animalId);
         if(animalId!=null && !access.isResponsibleAnimal(principal,animalId)) throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);
         long offset=(long)(page-1)*size;
-        List<FollowUpRecordResponse> rows=recordMapper.selectRescuerPage(principal.getUserId(),animalId,size,offset).stream().map(assembler::record).collect(Collectors.toList());
+        List<FollowUpRecordResponse> rows=assembler.records(recordMapper.selectRescuerPage(principal.getUserId(),animalId,size,offset));
         return new PageResponse<>(rows,page,size,recordMapper.countRescuer(principal.getUserId(),animalId));
     }
 

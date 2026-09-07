@@ -24,6 +24,12 @@ public class AnnouncementQueryService {
     public PageResponse<AnnouncementPublicSummaryResponse> publicList(int page,int size){validatePage(page,size);long offset=(long)(page-1)*size;List<AnnouncementPublicSummaryResponse> rows=mapper.selectPublicPage(size,offset).stream().map(assembler::publicSummary).collect(Collectors.toList());return new PageResponse<>(rows,page,size,mapper.countPublic());}
     public AnnouncementPublicDetailResponse publicDetail(Long id){requireId(id);Announcement a=mapper.selectPublishedById(id);if(a==null)throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);return assembler.publicDetail(a);}
     public PageResponse<AnnouncementAdminSummaryResponse> adminList(UserPrincipal p,int page,int size,String status){requireAdmin(p);validatePage(page,size);String s=normalizeStatus(status);long offset=(long)(page-1)*size;List<AnnouncementAdminSummaryResponse> rows=mapper.selectAdminPage(s,size,offset).stream().map(assembler::adminSummary).collect(Collectors.toList());return new PageResponse<>(rows,page,size,mapper.countAdmin(s));}
+    public PageResponse<AnnouncementAdminSummaryResponse> searchAdmin(UserPrincipal p,int page,int size,String status,String keyword){
+        if(keyword==null||keyword.isBlank())return adminList(p,page,size,status);
+        requireAdmin(p);validatePage(page,size);String k=keyword.trim();if(k.length()>100)throw new BusinessException(ErrorCode.INVALID_PARAMETER);
+        String s=normalizeStatus(status);List<AnnouncementAdminSummaryResponse> rows=mapper.searchAdmin(s,k,size,(long)(page-1)*size).stream().map(assembler::adminSummary).collect(Collectors.toList());
+        return new PageResponse<>(rows,page,size,mapper.countSearchAdmin(s,k));
+    }
     public AnnouncementAdminDetailResponse adminDetail(UserPrincipal p,Long id){requireAdmin(p);return assembler.adminDetail(required(id));}
     Announcement required(Long id){requireId(id);Announcement a=mapper.selectById(id);if(a==null)throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);return a;}
     static void requireAdmin(UserPrincipal p){if(p==null||!"ADMIN".equals(p.getRoleCode()))throw new BusinessException(ErrorCode.FORBIDDEN);}

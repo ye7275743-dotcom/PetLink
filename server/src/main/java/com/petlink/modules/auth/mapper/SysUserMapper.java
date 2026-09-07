@@ -8,6 +8,6 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface SysUserMapper extends BaseMapper<SysUser> {
-    @Select("SELECT * FROM sys_user WHERE account = #{account} LIMIT 1")
+    @Select("SELECT * FROM sys_user WHERE deleted=0 AND account = #{account} LIMIT 1")
     SysUser findByAccount(@Param("account") String account);
 }

@@ -1,0 +1,23 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import vm from 'node:vm'
+import {validateRegistration} from '../src/utils/registration.js'
+import {validTrendRange,chartPercent} from '../src/utils/dashboard.js'
+
+function authStores(){
+  const values=new Map([['petlink_token','legacy'],['petlink_user','corrupt legacy']])
+  const localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)}
+  const uni={getStorageSync(k){const value=localStorage.getItem(k);try{const object=JSON.parse(value);return object?.type?object.data:value}catch{return value}},setStorageSync(k,value){localStorage.setItem(k,typeof value==='string'?value:JSON.stringify({type:typeof value,data:value}))},removeStorageSync:k=>values.delete(k)}
+  const load=path=>{const code=fs.readFileSync(new URL(path,import.meta.url),'utf8').replace(/import \{ reactive \} from 'vue'/,'').replace('export function useAuth','function useAuth');const context=vm.createContext({localStorage,uni,reactive:x=>x});vm.runInContext(code+'\nthis.auth=useAuth()',context);return context.auth}
+  return {pc:()=>load('../src/store/auth.js'),mobile:()=>load('../../petlink-mobile/src/store/auth.js'),values}
+}
+test('same-origin PC and H5 sign in independently and never inherit v1 shared credentials',()=>{const s=authStores();const pc=s.pc(),mobile=s.mobile();assert.equal(pc.state.token,'');assert.equal(mobile.state.token,'');pc.setSession('fake-admin',{id:'1',roleCode:'ADMIN'});mobile.setSession('fake-user',{id:'2',roleCode:'USER'});assert.equal(s.pc().state.token,'fake-admin');assert.equal(s.mobile().state.token,'fake-user');assert.equal(s.pc().state.user.roleCode,'ADMIN');assert.equal(s.mobile().state.user.roleCode,'USER')})
+test('PC logout leaves H5 session intact and H5 logout leaves PC session intact',()=>{const s=authStores();const pc=s.pc(),mobile=s.mobile();pc.setSession('pc',{roleCode:'ADMIN'});mobile.setSession('mobile',{roleCode:'USER'});pc.logout();assert.equal(s.mobile().state.token,'mobile');pc.setSession('pc-again',{roleCode:'RESCUER'});mobile.logout();assert.equal(s.pc().state.token,'pc-again')})
+test('corrupt PC user cache does not crash application startup',()=>{const s=authStores();s.values.set('petlink_pc_user','not-json');assert.equal(s.pc().state.user,null)})
+test('concurrent session validations share one request and late responses cannot restore a logged-out session',async()=>{const pc=authStores().pc();pc.setSession('test',{roleCode:'ADMIN'});let calls=0,finish;const fetchMe=()=>{calls++;return new Promise(resolve=>{finish=resolve})};const a=pc.validateSession(fetchMe,{force:true}),b=pc.validateSession(fetchMe,{force:true});await Promise.resolve();assert.equal(calls,1);pc.logout();finish({roleCode:'ADMIN'});await Promise.all([a,b]);assert.equal(pc.state.token,'');assert.equal(pc.state.user,null)})
+test('fresh identity is reused during rapid menu navigation',async()=>{const pc=authStores().pc();pc.setSession('test',{roleCode:'ADMIN'});let calls=0;await pc.validateSession(async()=>{calls++;return {roleCode:'ADMIN'}},{maxAge:15000});assert.equal(calls,0)})
+test('registration accepts valid values and rejects mismatched confirmation',()=>{const form={account:'new_user',nickname:'伙伴',password:'Example123!',confirm:'Example123!',phone:''};assert.ok(Object.values(validateRegistration(form)).every(v=>!v));assert.ok(validateRegistration({...form,confirm:'different'}).confirm);assert.ok(validateRegistration({...form,phone:'123'}).phone);assert.ok(validateRegistration({...form,account:'admin!'}).account)})
+test('chart uses zero-height zero values and bounded proportional values',()=>{assert.equal(chartPercent(0,10),0);assert.equal(chartPercent(5,10),45);assert.equal(chartPercent(10,10),90);assert.ok(chartPercent(999,1)<=100)})
+test('trend range validation includes both endpoints and rejects oversized or reversed ranges',()=>{assert.equal(validTrendRange(['2026-09-04','2026-09-04']),true);assert.equal(validTrendRange(['2026-09-05','2026-09-04']),false);assert.equal(validTrendRange(['2020-01-01','2026-01-01']),false)})
+test('public routes are distinct from role-protected workbench and registered accounts have an entry',()=>{const router=fs.readFileSync(new URL('../src/router/index.js',import.meta.url),'utf8');for(const path of ['/adopt','/news','/guide','/register'])assert.ok(router.includes("path:'"+path+"'"));const users=fs.readFileSync(new URL('../src/views/UsersView.vue',import.meta.url),'utf8');assert.match(users,/adminApi.changeRole/);assert.match(users,/降为普通用户/);assert.match(users,/注册时间/)})

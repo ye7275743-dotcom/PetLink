@@ -1,0 +1,10 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+const read=p=>fs.readFileSync(new URL('../src/'+p,import.meta.url),'utf8')
+test('primary/plain buttons have separate high-contrast styles and no thick shadow',()=>{const css=read('styles/app.css');assert.match(css,/\.el-button--small \{height:34px/);assert.match(css,/\.el-button--primary\.is-plain\{color:#a7432d;background:#fff3ec/);assert.ok(!css.includes('0 5px 0 var(--orange-deep)'))})
+test('clue and animal management use centered dialogs',()=>{for(const name of ['CluesView','AnimalsView']){const source=read('views/'+name+'.vue');assert.match(source,/<el-dialog align-center/);assert.ok(!source.includes('<el-drawer'))}})
+test('homepage exposes three honest participation modules and only public animals',()=>{const source=read('views/PublicView.vue');assert.match(source,/class="action-bento"/);assert.match(source,/const companionCards=\[/);assert.equal((source.match(/eyebrow:/g)||[]).length,3);assert.match(source,/a.status!=='AVAILABLE'/)})
+test('management deletion and complete promotion labels are present',()=>{const users=read('views/UsersView.vue');assert.match(users,/adminApi.deleteUser/);assert.match(users,/晋升救援人员/);assert.match(read('views/AnnouncementsView.vue'),/adminDeleteAnnouncement\(row.id,row.version\)/);assert.match(users,/有未完成救助任务时不能删除/)})
+test('record and follow-up filters are sent to paginated server APIs',()=>{for(const name of ['FollowupsView','AdoptionRecordsView']){const source=read('views/'+name+'.vue');assert.match(source,/animalId:animalId.value/);assert.match(source,/userId:userId.value/);assert.match(source,/pager.reset\(\);load\(\)/)}})
+test('management queues expose meaningful server-side search controls',()=>{const cases=[['CluesView',/keyword:keyword.value/],['TasksView',/rescuerId:rescuerId.value/],['AnimalsView',/rescueTaskId:rescueTaskId.value/],['AdoptionsView',/animalId:animalId.value/]];for(const [name,pattern] of cases){const source=read('views/'+name+'.vue');assert.match(source,pattern);assert.match(source,/pager.reset\(\);load\(\)/)}})

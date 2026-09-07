@@ -6,6 +6,7 @@ const TEXT = Object.freeze({
   TREATING:'治疗中', OBSERVING:'观察中', AVAILABLE:'可领养', SUSPENDED:'暂停领养', ADOPTED:'已领养',
   PENDING:'待审核', APPROVED:'已批准', INVALIDATED:'已失效',
   DRAFT:'草稿', PUBLISHED:'已发布',
+  RABBIT:'兔', BIRD:'鸟', HAMSTER:'仓鼠',
   CAT:'猫', DOG:'狗', OTHER:'其他', MALE:'公', FEMALE:'母', UNKNOWN:'未知',
   total:'总数', enabled:'已启用', disabled:'已禁用', users:'普通用户', rescuers:'救助人员', admins:'管理员',
   publishedClueCount:'发布线索数', rescueTaskCount:'救助任务数', adoptionApplicationCount:'领养申请数', adoptionRecordCount:'领养记录数'

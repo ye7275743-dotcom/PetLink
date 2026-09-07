@@ -53,6 +53,18 @@ class ClueRequestNormalizerTest {
     }
 
     @Test
+    void foundTimeAllowsNormalClockSkewButRejectsRealFutureTime() {
+        CreateClueRequest nearFuture=baseRequest();
+        nearFuture.setFoundTime(OffsetDateTime.now().plusMinutes(1));
+        assertDoesNotThrow(() -> normalizer.normalizeCreate(1001L,nearFuture));
+
+        CreateClueRequest realFuture=baseRequest();
+        realFuture.setFoundTime(OffsetDateTime.now().plusMinutes(10));
+        BusinessException ex=assertThrows(BusinessException.class,() -> normalizer.normalizeCreate(1001L,realFuture));
+        assertEquals(ErrorCode.INVALID_PARAMETER,ex.getErrorCode());
+    }
+
+    @Test
     void patchAllowsExplicitBlankSceneAsNullButRejectsEmptyPatch() {
         UpdateClueRequest patch = new UpdateClueRequest();
         patch.setSceneDescription("  ");

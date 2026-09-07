@@ -17,6 +17,18 @@ public interface AnimalImageMapper extends BaseMapper<AnimalImage> {
     @Select("SELECT * FROM animal_image WHERE animal_id=#{animalId} ORDER BY sort_order ASC, id ASC LIMIT 1")
     AnimalImage selectCover(@Param("animalId") Long animalId);
 
+    @Select({"<script>",
+            "SELECT ai.* FROM animal_image ai",
+            "WHERE ai.animal_id IN",
+            "<foreach collection='animalIds' item='animalId' open='(' separator=',' close=')'>#{animalId}</foreach>",
+            "AND NOT EXISTS (",
+            " SELECT 1 FROM animal_image earlier",
+            " WHERE earlier.animal_id=ai.animal_id",
+            " AND (earlier.sort_order&lt;ai.sort_order OR (earlier.sort_order=ai.sort_order AND earlier.id&lt;ai.id))",
+            ") ORDER BY ai.animal_id ASC",
+            "</script>"})
+    List<AnimalImage> selectCovers(@Param("animalIds") List<Long> animalIds);
+
     @Select("SELECT COALESCE(MAX(sort_order),0) FROM animal_image WHERE animal_id=#{animalId}")
     int maxSortOrder(@Param("animalId") Long animalId);
 

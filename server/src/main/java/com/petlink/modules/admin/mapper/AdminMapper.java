@@ -14,8 +14,20 @@ import java.util.List;
 
 @Mapper
 public interface AdminMapper {
+    @Update("UPDATE sys_user SET deleted=1,status='DISABLED',updated_at=#{now} WHERE id=#{id} AND deleted=0 AND role_code!='ADMIN'")
+    int softDeleteUser(@Param("id") Long id,@Param("now") LocalDateTime now);
+
+    @Select("SELECT * FROM sys_user WHERE deleted=0 AND id=#{id} FOR UPDATE")
+    SysUser lockUser(@Param("id") Long id);
+
+    @Select("SELECT COUNT(*) FROM rescue_task WHERE rescuer_id=#{id} AND status IN ('WAITING_START','IN_PROGRESS')")
+    long countActiveTasks(@Param("id") Long id);
+
+    @Update("UPDATE sys_user SET role_code=#{role},updated_at=#{now} WHERE deleted=0 AND id=#{id} AND role_code=#{previous}")
+    int changeRole(@Param("id") Long id,@Param("previous") String previous,@Param("role") String role,@Param("now") LocalDateTime now);
+
     @Select({"<script>",
-            "SELECT * FROM sys_user WHERE 1=1",
+            "SELECT * FROM sys_user WHERE deleted=0 AND 1=1",
             "<if test='roleCode != null'> AND role_code=#{roleCode}</if>",
             "<if test='status != null'> AND status=#{status}</if>",
             "<if test='keyword != null'> AND (account LIKE CONCAT('%',#{keyword},'%') OR nickname LIKE CONCAT('%',#{keyword},'%'))</if>",
@@ -25,23 +37,23 @@ public interface AdminMapper {
                                   @Param("keyword") String keyword,@Param("limit") int limit,@Param("offset") long offset);
 
     @Select({"<script>",
-            "SELECT COUNT(*) FROM sys_user WHERE 1=1",
+            "SELECT COUNT(*) FROM sys_user WHERE deleted=0 AND 1=1",
             "<if test='roleCode != null'> AND role_code=#{roleCode}</if>",
             "<if test='status != null'> AND status=#{status}</if>",
             "<if test='keyword != null'> AND (account LIKE CONCAT('%',#{keyword},'%') OR nickname LIKE CONCAT('%',#{keyword},'%'))</if>",
             "</script>"})
     long countUsers(@Param("roleCode") String roleCode,@Param("status") String status,@Param("keyword") String keyword);
 
-    @Select("SELECT * FROM sys_user WHERE id=#{id}")
+    @Select("SELECT * FROM sys_user WHERE deleted=0 AND id=#{id}")
     SysUser selectUser(@Param("id") Long id);
 
-    @Update("UPDATE sys_user SET status='ENABLED',updated_at=#{now} WHERE id=#{id} AND status='DISABLED'")
+    @Update("UPDATE sys_user SET status='ENABLED',updated_at=#{now} WHERE deleted=0 AND id=#{id} AND status='DISABLED'")
     int enableUser(@Param("id") Long id,@Param("now") LocalDateTime now);
 
-    @Update("UPDATE sys_user SET status='DISABLED',updated_at=#{now} WHERE id=#{id} AND status='ENABLED'")
+    @Update("UPDATE sys_user SET status='DISABLED',updated_at=#{now} WHERE deleted=0 AND id=#{id} AND status='ENABLED'")
     int disableUser(@Param("id") Long id,@Param("now") LocalDateTime now);
 
-    @Update("UPDATE sys_user SET role_code='RESCUER',updated_at=#{now} WHERE id=#{id} AND role_code='USER'")
+    @Update("UPDATE sys_user SET role_code='RESCUER',updated_at=#{now} WHERE deleted=0 AND id=#{id} AND role_code='USER'")
     int promoteRescuer(@Param("id") Long id,@Param("now") LocalDateTime now);
 
     @Select("SELECT COUNT(*) FROM rescue_clue WHERE publisher_id=#{userId}")
@@ -107,9 +119,9 @@ public interface AdminMapper {
             "</script>"})
     long countAdoptionRecords(@Param("userId") Long userId,@Param("animalId") Long animalId,@Param("applicationId") Long applicationId);
 
-    @Select("SELECT COUNT(*) FROM sys_user") long countAllUsers();
-    @Select("SELECT COUNT(*) FROM sys_user WHERE status=#{status}") long countUsersByStatus(@Param("status") String status);
-    @Select("SELECT COUNT(*) FROM sys_user WHERE role_code=#{roleCode}") long countUsersByRole(@Param("roleCode") String roleCode);
+    @Select("SELECT COUNT(*) FROM sys_user WHERE deleted=0") long countAllUsers();
+    @Select("SELECT COUNT(*) FROM sys_user WHERE deleted=0 AND status=#{status}") long countUsersByStatus(@Param("status") String status);
+    @Select("SELECT COUNT(*) FROM sys_user WHERE deleted=0 AND role_code=#{roleCode}") long countUsersByRole(@Param("roleCode") String roleCode);
     @Select("SELECT status,COUNT(*) AS count FROM rescue_clue GROUP BY status") List<StatusCountRow> countClueStatuses();
     @Select("SELECT status,COUNT(*) AS count FROM rescue_task GROUP BY status") List<StatusCountRow> countTaskStatuses();
     @Select("SELECT status,COUNT(*) AS count FROM animal GROUP BY status") List<StatusCountRow> countAnimalStatuses();

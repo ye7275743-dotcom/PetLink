@@ -55,10 +55,26 @@ class RescueClueQueryServiceTest {
 
     @Test
     void adminListDefaultsToPendingReview() {
-        when(mapper.selectAdminPage("PENDING_REVIEW", 20, 0L)).thenReturn(java.util.List.of());
-        when(mapper.countAdmin("PENDING_REVIEW")).thenReturn(0L);
-        service.adminList(new UserPrincipal(1L, "ADMIN"), 1, 20, null);
-        verify(mapper).selectAdminPage("PENDING_REVIEW", 20, 0L);
+        when(mapper.selectAdminPage("PENDING_REVIEW", null, 20, 0L)).thenReturn(java.util.List.of());
+        when(mapper.countAdmin("PENDING_REVIEW", null)).thenReturn(0L);
+        service.adminList(new UserPrincipal(1L, "ADMIN"), 1, 20, null, null);
+        verify(mapper).selectAdminPage("PENDING_REVIEW", null, 20, 0L);
+    }
+
+    @Test
+    void adminListTrimsAndForwardsKeyword() {
+        when(mapper.selectAdminPage("WAITING_ACCEPT", "公园", 10, 10L)).thenReturn(java.util.List.of());
+        when(mapper.countAdmin("WAITING_ACCEPT", "公园")).thenReturn(2L);
+        var out=service.adminList(new UserPrincipal(1L, "ADMIN"), 2, 10, "WAITING_ACCEPT", "  公园  ");
+        assertEquals(2L,out.getTotal());
+        verify(mapper).selectAdminPage("WAITING_ACCEPT", "公园", 10, 10L);
+    }
+
+    @Test
+    void adminListRejectsOverlongKeyword() {
+        String keyword="x".repeat(101);
+        assertEquals(ErrorCode.INVALID_PARAMETER,assertThrows(BusinessException.class,
+                () -> service.adminList(new UserPrincipal(1L,"ADMIN"),1,20,null,keyword)).getErrorCode());
     }
 
     private RescueClue clue(Long id, Long publisher, String status) {

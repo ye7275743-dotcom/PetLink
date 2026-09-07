@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 @Component
 public class ClueRequestNormalizer {
+    private static final Duration CLOCK_SKEW_TOLERANCE=Duration.ofMinutes(5);
 
     public NormalizedCreate normalizeCreate(Long userId, CreateClueRequest request) {
         if (request == null) throw invalid();
@@ -68,7 +70,9 @@ public class ClueRequestNormalizer {
 
     private OffsetDateTime requiredFoundTime(OffsetDateTime value) {
         if (value == null) throw invalid();
-        if (value.toInstant().isAfter(Instant.now())) throw invalid();
+        // Browser and API hosts may differ by a few seconds. Keep the business rule
+        // while tolerating normal distributed-system clock skew.
+        if (value.toInstant().isAfter(Instant.now().plus(CLOCK_SKEW_TOLERANCE))) throw invalid();
         return value;
     }
 

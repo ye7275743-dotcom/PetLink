@@ -25,8 +25,13 @@ public class AdoptionAdminController {
     public AdoptionAdminController(AdoptionService service){this.service=service;}
 
     @GetMapping
-    public ApiResponse<PageResponse<AdoptionApplicationSummaryResponse>> list(@AuthenticationPrincipal UserPrincipal principal,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="20") int size,@RequestParam(required=false) String status){
-        return ApiResponse.success(service.adminApplications(principal,page,size,status));
+    public ApiResponse<PageResponse<AdoptionApplicationSummaryResponse>> list(@AuthenticationPrincipal UserPrincipal principal,
+                                                                               @RequestParam(defaultValue="1") int page,
+                                                                               @RequestParam(defaultValue="20") int size,
+                                                                               @RequestParam(required=false) String status,
+                                                                               @RequestParam(required=false) Long animalId,
+                                                                               @RequestParam(required=false) Long userId){
+        return ApiResponse.success(service.adminApplications(principal,page,size,status,animalId,userId));
     }
 
     @PostMapping("/{applicationId}/audit")
@@ -34,4 +39,3 @@ public class AdoptionAdminController {
         return ApiResponse.success(service.audit(principal,applicationId,request));
     }
 }
-

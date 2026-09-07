@@ -26,7 +26,7 @@ public class RescueTaskResponseAssembler {
         this.clueAssembler=clueAssembler; this.recordMapper=recordMapper; this.animalMapper=animalMapper;
     }
     public TaskSummaryResponse summary(RescueTask task) {
-        return new TaskSummaryResponse(String.valueOf(task.getId()), String.valueOf(task.getClueId()), task.getStatus(),
+        return new TaskSummaryResponse(String.valueOf(task.getId()), String.valueOf(task.getClueId()), String.valueOf(task.getRescuerId()), task.getStatus(),
                 TimeUtils.toOffset(task.getStartedAt()), TimeUtils.toOffset(task.getFinishedAt()),
                 TimeUtils.toOffset(task.getCreatedAt()), TimeUtils.toOffset(task.getUpdatedAt()));
     }
@@ -38,7 +38,7 @@ public class RescueTaskResponseAssembler {
         List<RescueRecordResponse> records=recordMapper.selectByTaskId(task.getId()).stream().map(this::record).collect(Collectors.toList());
         List<AnimalSummaryResponse> animals=animalMapper.selectByRescueTaskId(task.getId()).stream().map(this::animal).collect(Collectors.toList());
         TaskSummaryResponse base=summary(task);
-        return new TaskDetailResponse(base.getId(), base.getClueId(), base.getStatus(), base.getStartedAt(), base.getFinishedAt(),
+        return new TaskDetailResponse(base.getId(), base.getClueId(), base.getRescuerId(), base.getStatus(), base.getStartedAt(), base.getFinishedAt(),
                 base.getCreatedAt(), base.getUpdatedAt(), clueAssembler.summary(clue), task.getFailureReason(), task.getCancelReason(), records, animals);
     }
     private AnimalSummaryResponse animal(Animal animal) {

@@ -480,29 +480,44 @@ textarea:focus-visible,
 }
 
 .el-button {
-  min-height: 38px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 16px;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-weight: 650;
   border-radius: 10px;
   transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease;
 }
 
-.el-button--primary {
-  background: var(--accent-gradient);
-  border-color: transparent;
-  box-shadow: 0 5px 0 var(--orange-deep), 0 10px 22px rgba(228, 104, 74, 0.16);
+.el-button--small {height:34px;min-height:34px;min-width:60px;padding:0 12px;font-size:12px}
+.el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
+  color:#fff;
+  background:#c64f37;
+  border-color:#c64f37;
+  box-shadow:0 2px 5px rgba(133,53,36,.12);
 }
 
-.el-button--primary:hover {
-  background: linear-gradient(135deg, #f18466 0%, #dd6047 100%);
-  border-color: transparent;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 0 var(--orange-deep), 0 14px 28px rgba(228, 104, 74, 0.21);
+.el-button--primary:not(.is-plain):not(.is-text):not(.is-link):hover {
+  color:#fff;background:#ad402b;border-color:#ad402b;
 }
 
-.el-button--primary:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 var(--orange-deep);
-}
+.el-button--primary.is-plain{color:#a7432d;background:#fff3ec;border-color:#dfb2a1;box-shadow:none}
+.el-button--primary.is-plain:hover{color:#fff;background:#b94b32;border-color:#b94b32}
+.el-button--primary.is-text,.el-button--primary.is-link{color:#ad402b;background:transparent;box-shadow:none}
+.el-button.is-disabled,.el-button.is-disabled:hover{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.el-button+.el-button{margin-left:8px}
+.el-table .cell .el-button{vertical-align:middle}
+.el-table .cell{overflow-wrap:anywhere}
+.action-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.action-row .el-button+.el-button{margin-left:0}
+.el-dialog{max-width:calc(100vw - 32px);border-radius:20px;padding:0;overflow:hidden}
+.el-dialog__body{max-height:calc(85vh - 150px);overflow-y:auto;overscroll-behavior:contain}
+.el-dialog__footer{padding:16px 26px 22px;border-top:1px solid var(--line)}
+.el-tabs__content{padding-bottom:10px}
+.detail-loading{min-height:180px}
+.toolbar .search-field{width:230px;max-width:100%}
 
 .el-input__wrapper,
 .el-textarea__inner,

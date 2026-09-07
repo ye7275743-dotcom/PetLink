@@ -11,6 +11,7 @@ import com.petlink.modules.admin.vo.AdminUserDetailResponse;
 import com.petlink.modules.admin.vo.AdminUserStatisticsResponse;
 import com.petlink.modules.admin.vo.AdminUserSummaryResponse;
 import com.petlink.modules.auth.entity.SysUser;
+import com.petlink.modules.admin.dto.ChangeRoleRequest;
 import com.petlink.security.UserPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +72,38 @@ public class AdminUserService {
         requireAdmin(admin);requireId(userId);LocalDateTime now=LocalDateTime.now(TimeUtils.ZONE);
         if(mapper.promoteRescuer(userId,now)!=1)resolveState(userId,null,"USER");
         logs.append("SYS_USER",userId,"PROMOTE_RESCUER",null,null,admin.getUserId(),null);
+        return assembler.userAction(requiredAfterWrite(userId));
+    }
+
+    @Transactional
+    public void deleteUser(UserPrincipal admin,Long userId) {
+        requireAdmin(admin);requireId(userId);
+        SysUser user=mapper.lockUser(userId);
+        if(user==null)throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);
+        if("ADMIN".equals(user.getRoleCode())||admin.getUserId().equals(userId))throw new BusinessException(ErrorCode.FORBIDDEN,"不能删除管理员或当前登录账号");
+        if(mapper.countActiveTasks(userId)>0)throw new BusinessException(ErrorCode.BUSINESS_STATE_CONFLICT,"该用户还有未完成救助任务，请先完成或处置任务");
+        if(mapper.softDeleteUser(userId,LocalDateTime.now(TimeUtils.ZONE))!=1)throw new BusinessException(ErrorCode.BUSINESS_STATE_CONFLICT);
+        logs.append("SYS_USER",userId,"DELETE_USER",user.getStatus(),"DELETED",admin.getUserId(),"管理员确认删除账号，保留历史业务关联");
+    }
+
+    @Transactional
+    public AdminUserActionResponse changeRole(UserPrincipal admin,Long userId,ChangeRoleRequest request) {
+        requireAdmin(admin);requireId(userId);
+        if(request==null || !Set.of("USER","RESCUER").contains(request.getRoleCode()==null?"":request.getRoleCode()))
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER);
+        String reason=request.getReason()==null?"":request.getReason().trim();
+        if(reason.isEmpty() || reason.length()>500)throw new BusinessException(ErrorCode.INVALID_PARAMETER,"请填写 1～500 字的角色调整原因");
+        // Serialize with rescue acceptance on the account row; preserve historical ownership.
+        SysUser user=mapper.lockUser(userId);
+        if(user==null)throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);
+        if("ADMIN".equals(user.getRoleCode()) || admin.getUserId().equals(userId))throw new BusinessException(ErrorCode.FORBIDDEN);
+        if(user.getRoleCode().equals(request.getRoleCode()))throw new BusinessException(ErrorCode.BUSINESS_STATE_CONFLICT,"该账号已是目标角色，请刷新列表");
+        if("USER".equals(request.getRoleCode()) && mapper.countActiveTasks(userId)>0)
+            throw new BusinessException(ErrorCode.BUSINESS_STATE_CONFLICT,"该救助人员仍有待开始或进行中的任务，请先完成或处置任务后再降级");
+        String previous=user.getRoleCode();
+        if(mapper.changeRole(userId,previous,request.getRoleCode(),LocalDateTime.now(TimeUtils.ZONE))!=1)
+            throw new BusinessException(ErrorCode.BUSINESS_STATE_CONFLICT);
+        logs.append("SYS_USER",userId,"USER".equals(request.getRoleCode())?"DEMOTE_RESCUER":"PROMOTE_RESCUER",previous,request.getRoleCode(),admin.getUserId(),reason);
         return assembler.userAction(requiredAfterWrite(userId));
     }
 

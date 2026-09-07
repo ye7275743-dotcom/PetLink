@@ -32,19 +32,22 @@ public interface RescueClueMapper extends BaseMapper<RescueClue> {
     long countMine(@Param("publisherId") Long publisherId, @Param("status") String status);
 
     @Select({"<script>",
-            "SELECT * FROM rescue_clue",
-            "<if test='status != null'> WHERE status = #{status}</if>",
+            "SELECT * FROM rescue_clue WHERE 1=1",
+            "<if test='status != null'> AND status = #{status}</if>",
+            "<if test='keyword != null'> AND (location LIKE CONCAT('%',#{keyword},'%') OR animal_description LIKE CONCAT('%',#{keyword},'%') OR scene_description LIKE CONCAT('%',#{keyword},'%') OR contact LIKE CONCAT('%',#{keyword},'%'))</if>",
             " ORDER BY created_at ASC, id ASC LIMIT #{limit} OFFSET #{offset}",
             "</script>"})
     List<RescueClue> selectAdminPage(@Param("status") String status,
+                                     @Param("keyword") String keyword,
                                      @Param("limit") int limit,
                                      @Param("offset") long offset);
 
     @Select({"<script>",
-            "SELECT COUNT(*) FROM rescue_clue",
-            "<if test='status != null'> WHERE status = #{status}</if>",
+            "SELECT COUNT(*) FROM rescue_clue WHERE 1=1",
+            "<if test='status != null'> AND status = #{status}</if>",
+            "<if test='keyword != null'> AND (location LIKE CONCAT('%',#{keyword},'%') OR animal_description LIKE CONCAT('%',#{keyword},'%') OR scene_description LIKE CONCAT('%',#{keyword},'%') OR contact LIKE CONCAT('%',#{keyword},'%'))</if>",
             "</script>"})
-    long countAdmin(@Param("status") String status);
+    long countAdmin(@Param("status") String status,@Param("keyword") String keyword);
 
     @Select("SELECT CASE WHEN EXISTS (SELECT 1 FROM rescue_task WHERE clue_id = #{clueId} AND rescuer_id = #{rescuerId}) THEN 1 ELSE 0 END")
     int existsTaskForRescuer(@Param("clueId") Long clueId, @Param("rescuerId") Long rescuerId);

@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class AdoptionQueryService {
@@ -39,7 +38,7 @@ public class AdoptionQueryService {
     public PageResponse<AdoptionApplicationSummaryResponse> myApplications(UserPrincipal principal,int page,int size,String status){
         requireApplicantRole(principal); validatePage(page,size); String normalized=normalizeOptionalStatus(status);
         long offset=(long)(page-1)*size;
-        List<AdoptionApplicationSummaryResponse> rows=applicationMapper.selectUserPage(principal.getUserId(),normalized,size,offset).stream().map(assembler::summary).collect(Collectors.toList());
+        List<AdoptionApplicationSummaryResponse> rows=assembler.summaries(applicationMapper.selectUserPage(principal.getUserId(),normalized,size,offset));
         return new PageResponse<>(rows,page,size,applicationMapper.countUser(principal.getUserId(),normalized));
     }
 
@@ -50,16 +49,17 @@ public class AdoptionQueryService {
         return assembler.detail(app,principal);
     }
 
-    public PageResponse<AdoptionApplicationSummaryResponse> adminApplications(UserPrincipal principal,int page,int size,String status){
+    public PageResponse<AdoptionApplicationSummaryResponse> adminApplications(UserPrincipal principal,int page,int size,String status,Long animalId,Long userId){
         requireAdmin(principal); validatePage(page,size); String normalized=status==null||status.isBlank()?"PENDING":normalizeStatus(status);
+        validateOptionalFilterId(animalId); validateOptionalFilterId(userId);
         long offset=(long)(page-1)*size;
-        List<AdoptionApplicationSummaryResponse> rows=applicationMapper.selectAdminPage(normalized,size,offset).stream().map(assembler::summary).collect(Collectors.toList());
-        return new PageResponse<>(rows,page,size,applicationMapper.countAdmin(normalized));
+        List<AdoptionApplicationSummaryResponse> rows=assembler.summaries(applicationMapper.selectAdminPage(normalized,animalId,userId,size,offset));
+        return new PageResponse<>(rows,page,size,applicationMapper.countAdmin(normalized,animalId,userId));
     }
 
     public PageResponse<AdoptionRecordResponse> myRecords(UserPrincipal principal,int page,int size){
         requireApplicantRole(principal); validatePage(page,size); long offset=(long)(page-1)*size;
-        List<AdoptionRecordResponse> rows=recordMapper.selectUserPage(principal.getUserId(),size,offset).stream().map(assembler::record).collect(Collectors.toList());
+        List<AdoptionRecordResponse> rows=assembler.records(recordMapper.selectUserPage(principal.getUserId(),size,offset));
         return new PageResponse<>(rows,page,size,recordMapper.countUser(principal.getUserId()));
     }
 
@@ -85,8 +85,8 @@ public class AdoptionQueryService {
     private String normalizeOptionalStatus(String status){return status==null||status.isBlank()?null:normalizeStatus(status);}
     private String normalizeStatus(String status){String v=status.trim(); if(!STATUSES.contains(v)) throw new BusinessException(ErrorCode.INVALID_PARAMETER); return v;}
     private void validatePage(int page,int size){if(page<1||size<1||size>100) throw new BusinessException(ErrorCode.INVALID_PARAMETER);}
+    private void validateOptionalFilterId(Long id){if(id!=null&&id<=0) throw new BusinessException(ErrorCode.INVALID_PARAMETER);}
     private void requireApplicantRole(UserPrincipal p){if(p==null || !("USER".equals(p.getRoleCode())||"RESCUER".equals(p.getRoleCode()))) throw new BusinessException(ErrorCode.FORBIDDEN);}
     private void requireAdmin(UserPrincipal p){if(p==null||!"ADMIN".equals(p.getRoleCode())) throw new BusinessException(ErrorCode.FORBIDDEN);}
     private void requireId(Long id){if(id==null||id<=0) throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);}
 }
-

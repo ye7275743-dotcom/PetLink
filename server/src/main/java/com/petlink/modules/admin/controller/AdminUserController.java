@@ -3,6 +3,8 @@ package com.petlink.modules.admin.controller;
 import com.petlink.common.ApiResponse;
 import com.petlink.common.PageResponse;
 import com.petlink.modules.admin.service.AdminUserService;
+import com.petlink.modules.admin.dto.ChangeRoleRequest;
+import org.springframework.web.bind.annotation.RequestBody;
 import com.petlink.modules.admin.vo.AdminUserActionResponse;
 import com.petlink.modules.admin.vo.AdminUserDetailResponse;
 import com.petlink.modules.admin.vo.AdminUserSummaryResponse;
@@ -10,6 +12,7 @@ import com.petlink.security.UserPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminUserController {
     private final AdminUserService service;
     public AdminUserController(AdminUserService service){this.service=service;}
+
+    @DeleteMapping("/{userId}")
+    public ApiResponse<Void> deleteUser(@AuthenticationPrincipal UserPrincipal p,@PathVariable Long userId){service.deleteUser(p,userId);return ApiResponse.success(null);}
+
+    @PostMapping("/{userId}/role")
+    public ApiResponse<AdminUserActionResponse> changeRole(@AuthenticationPrincipal UserPrincipal p,@PathVariable Long userId,@RequestBody ChangeRoleRequest body){return ApiResponse.success(service.changeRole(p,userId,body));}
 
     @GetMapping
     public ApiResponse<PageResponse<AdminUserSummaryResponse>> list(@AuthenticationPrincipal UserPrincipal p,
