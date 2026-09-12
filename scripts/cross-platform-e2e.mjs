@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto'
 const PC = process.env.PETLINK_PC_ORIGIN || 'http://127.0.0.1:5173/api'
 const MOBILE = process.env.PETLINK_MOBILE_ORIGIN || 'http://127.0.0.1:5174/api'
 const BACKEND = process.env.PETLINK_BACKEND_ORIGIN || 'http://127.0.0.1:8080'
+const HEALTH_URL = process.env.PETLINK_HEALTH_URL || `${BACKEND}/actuator/health`
 const operatorPassword = process.env.PETLINK_E2E_OPERATOR_PASSWORD
 const adminAccount = process.env.PETLINK_E2E_ADMIN_ACCOUNT || 'admin'
 const rescuerAccount = process.env.PETLINK_E2E_RESCUER_ACCOUNT || 'rescuer'
@@ -82,7 +83,8 @@ async function step(name, action) {
   return detail
 }
 
-const health = await request(BACKEND, '/actuator/health')
+const healthResponse = await fetch(HEALTH_URL, { headers: { Accept: 'application/json' } })
+const health = { status: healthResponse.status, body: await healthResponse.json() }
 await step('后端健康检查', () => {
   const data = expectStatus(health, 200, 'health')
   assert.equal(data.status, 'UP')
@@ -216,7 +218,8 @@ const success = await request(PC, `/rescue-tasks/${taskId}/result`, {
     result: 'SUCCESS',
     animals: [{
       name: `跨平台动物 ${suffix}`, species: 'CAT', sex: 'UNKNOWN', estimatedAgeMonths: 12,
-      color: 'orange', healthCondition: '状态稳定', initialHealthRecord: '已完成初步检查', imageTokens: []
+      color: 'orange', healthCondition: '状态稳定', personality: '亲人、能适应家庭环境',
+      adoptionRequirements: '室内科学喂养并接受回访', initialHealthRecord: '已完成初步检查', imageTokens: []
     }]
   }
 })
@@ -248,6 +251,8 @@ const animalBeforeData = await step('救助人员 PC 端看到负责动物', () 
   const data = expectStatus(animalBefore, 200, 'responsible animal')
   assert.equal(data.status, 'TREATING')
   assert.equal(data.rescueTaskId, taskId)
+  assert.equal(data.personality, '亲人、能适应家庭环境')
+  assert.equal(data.adoptionRequirements, '室内科学喂养并接受回访')
   return data
 })
 
