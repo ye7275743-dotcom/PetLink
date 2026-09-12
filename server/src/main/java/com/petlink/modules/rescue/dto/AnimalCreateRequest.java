@@ -9,6 +9,8 @@ public class AnimalCreateRequest {
     private Integer estimatedAgeMonths;
     private String color;
     private String healthCondition;
+    private String personality;
+    private String adoptionRequirements;
     private String initialHealthRecord;
     private List<String> imageTokens;
 
@@ -24,6 +26,10 @@ public class AnimalCreateRequest {
     public void setColor(String color) { this.color = color; }
     public String getHealthCondition() { return healthCondition; }
     public void setHealthCondition(String healthCondition) { this.healthCondition = healthCondition; }
+    public String getPersonality() { return personality; }
+    public void setPersonality(String personality) { this.personality = personality; }
+    public String getAdoptionRequirements() { return adoptionRequirements; }
+    public void setAdoptionRequirements(String adoptionRequirements) { this.adoptionRequirements = adoptionRequirements; }
     public String getInitialHealthRecord() { return initialHealthRecord; }
     public void setInitialHealthRecord(String initialHealthRecord) { this.initialHealthRecord = initialHealthRecord; }
     public List<String> getImageTokens() { return imageTokens; }

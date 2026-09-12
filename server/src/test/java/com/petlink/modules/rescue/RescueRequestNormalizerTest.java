@@ -48,9 +48,13 @@ class RescueRequestNormalizerTest {
     @Test void animalFieldsAreNormalized() {
         RescueResultRequest request=new RescueResultRequest(); request.setResult("SUCCESS");
         AnimalCreateRequest a=animal(" Cat "); a.setColor("  orange  "); a.setInitialHealthRecord("  bandaged  ");
+        a.setPersonality("  calm after warming up  ");
+        a.setAdoptionRequirements("  indoor home with screened windows  ");
         request.setAnimals(List.of(a));
         var n=normalizer.normalizeResult(request).getAnimals().get(0);
         assertEquals("Cat",n.getName()); assertEquals("orange",n.getColor()); assertEquals("bandaged",n.getInitialHealthRecord());
+        assertEquals("calm after warming up",n.getPersonality());
+        assertEquals("indoor home with screened windows",n.getAdoptionRequirements());
     }
 
     private AnimalCreateRequest animal(String name) {

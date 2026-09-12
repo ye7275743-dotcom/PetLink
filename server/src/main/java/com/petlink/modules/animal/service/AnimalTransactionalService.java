@@ -72,6 +72,8 @@ public class AnimalTransactionalService {
         if (request.isEstimatedAgeMonthsPresent()) { Integer v=request.getEstimatedAgeMonths(); if (v!=null && (v<0||v>65535)) throw new BusinessException(ErrorCode.INVALID_PARAMETER); if (!Objects.equals(v,current.getEstimatedAgeMonths())) {update.set("estimated_age_months",v);changed=true;} }
         if (request.isColorPresent()) { String v=optionalText(request.getColor(),100); if (!Objects.equals(v,current.getColor())) {update.set("color",v);changed=true;} }
         if (request.isHealthConditionPresent()) { String v=requiredText(request.getHealthCondition(),1000); if (!Objects.equals(v,current.getHealthCondition())) {update.set("health_condition",v);changed=true;} }
+        if (request.isPersonalityPresent()) { String v=optionalText(request.getPersonality(),1000); if (!Objects.equals(v,current.getPersonality())) {update.set("personality",v);changed=true;} }
+        if (request.isAdoptionRequirementsPresent()) { String v=optionalText(request.getAdoptionRequirements(),1000); if (!Objects.equals(v,current.getAdoptionRequirements())) {update.set("adoption_requirements",v);changed=true;} }
         if (!changed) return assembler.detail(current,true);
         update.setSql("version = version + 1").set("updated_at",LocalDateTime.now(TimeUtils.ZONE));
         if (animalMapper.update(null,update) != 1) distinguishOptimistic(principal,animalId,request.getVersion(),null);

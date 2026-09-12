@@ -42,7 +42,8 @@ public class AnimalResponseAssembler {
 
     private AnimalSummaryResponse summary(Animal animal, AnimalImage cover) {
         return new AnimalSummaryResponse(String.valueOf(animal.getId()),animal.getName(),animal.getSpecies(),animal.getSex(),
-                animal.getEstimatedAgeMonths(),animal.getColor(),animal.getHealthCondition(),animal.getStatus(),
+                animal.getEstimatedAgeMonths(),animal.getColor(),animal.getHealthCondition(),animal.getPersonality(),
+                animal.getAdoptionRequirements(),animal.getStatus(),
                 cover == null ? null : mediaUrl(cover.getId()),animal.getVersion(),
                 TimeUtils.toOffset(animal.getCreatedAt()),TimeUtils.toOffset(animal.getUpdatedAt()));
     }
@@ -55,7 +56,7 @@ public class AnimalResponseAssembler {
         }
         List<HealthRecordPublicResponse> healthRecords=healthRecords(animal.getId(),privileged);
         return new AnimalDetailResponse(base.getId(),base.getName(),base.getSpecies(),base.getSex(),base.getEstimatedAgeMonths(),
-                base.getColor(),base.getHealthCondition(),base.getStatus(),base.getCoverImageUrl(),base.getVersion(),
+                base.getColor(),base.getHealthCondition(),base.getPersonality(),base.getAdoptionRequirements(),base.getStatus(),base.getCoverImageUrl(),base.getVersion(),
                 base.getCreatedAt(),base.getUpdatedAt(),privileged ? String.valueOf(animal.getRescueTaskId()) : null,
                 animal.getSuspendReason(),images,healthRecords);
     }

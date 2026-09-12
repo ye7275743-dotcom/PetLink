@@ -12,6 +12,8 @@ PetLink 是一个面向流浪动物救助与领养的全栈课程设计项目，
 
 需要 JDK 17、MySQL 8.0.16+、Node.js 18+ 和 Python 3。
 
+全新数据库直接执行 `sql/petlink.sql`。已有 PetLink 数据库升级到本版本时，先备份，再执行 `sql/migrate-existing-to-20260912.sql`；该脚本会按需补齐用户逻辑删除字段、索引以及动物性格和领养要求字段，可重复执行且不会覆盖现有数据。
+
 ```bash
 cd server
 ./mvnw test
@@ -29,6 +31,8 @@ npm ci && npm run dev:h5
 ```
 
 电脑端默认端口为 `5173`，移动端 H5 默认端口为 `5174`。完整本地自动化检查见 `scripts/verify-all.sh`。
+
+如需把完整图片案例写入本地数据库，请先确保 `admin`、`rescuer`、`user` 三个演示账号使用同一演示密码并已启动后端，再在项目根目录设置 `PETLINK_DEMO_PASSWORD` 后执行 `node scripts/seed-demo-data.mjs`。脚本会新建带批次标记的数据，不修改已有业务记录。
 
 ## 生产部署
 

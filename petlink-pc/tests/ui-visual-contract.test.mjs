@@ -26,12 +26,12 @@ test('PC premium visual layer keeps depth and branded surfaces', () => {
 
 test('PC public home and login consume generated rescue hero assets', () => {
   const publicHome=readFileSync(new URL('../src/views/PublicView.vue',import.meta.url),'utf8')
-  assert.match(publicHome, /petlink-home-hero-v2\.webp/)
+  assert.match(publicHome, /content\/home-hero\.jpg/)
   assert.match(publicHome, /fetchpriority="high"/)
   assert.match(dashboard,/work-metrics/)
   assert.match(dashboard,/待处理事项/)
   assert.match(login, /petlink-rescue-hero-v1\.jpg/)
-  assert.ok(existsSync(new URL('../public/assets/petlink-home-hero-v2.webp', import.meta.url)))
+  assert.ok(existsSync(new URL('../public/assets/content/home-hero.jpg', import.meta.url)))
   assert.ok(existsSync(new URL('../public/assets/petlink-rescue-hero-v1.jpg', import.meta.url)))
 })
 

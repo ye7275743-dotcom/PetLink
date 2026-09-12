@@ -16,6 +16,8 @@
 3. `sql/dev-seed-rescuer.sql`
 4. `sql/dev-seed-user.sql`
 
+如果不是新建数据库，而是在已有 PetLink 数据库上运行本版本，不要重新导入 `petlink.sql`；先备份，再执行 `sql/migrate-existing-to-20260912.sql`。脚本可重复执行，会兼容补齐 `sys_user.deleted`、对应索引以及动物档案新增字段。
+
 三类种子分别提供 ADMIN、RESCUER、USER 演示账号；脚本采用幂等插入，重复执行不会创建重复账号。种子仅用于本机课程演示。演示密码由现场负责人保管，不写入答辩 PPT、截图或公开提交说明。
 
 ## 3. 启动后端
@@ -52,7 +54,24 @@ npm run dev:h5
 - 电脑工作台：`http://localhost:5173`
 - 移动端 H5：`http://localhost:5174`
 
-## 5. 建议演示顺序
+## 5. 可选：写入完整演示案例
+
+后端启动后，在项目根目录设置三个演示账号共用的密码并运行：
+
+```bash
+PETLINK_DEMO_PASSWORD="你的本地演示密码" node scripts/seed-demo-data.mjs
+```
+
+Windows PowerShell：
+
+```powershell
+$env:PETLINK_DEMO_PASSWORD="你的本地演示密码"
+node scripts/seed-demo-data.mjs
+```
+
+脚本会上传同一动物的多张照片，并创建救助、建档、领养、回访和不同状态分支。它只新增带演示批次标记的数据，不覆盖已有记录。
+
+## 6. 建议演示顺序
 
 1. 普通用户注册并发布救助线索。
 2. 管理员审核线索。
@@ -63,7 +82,7 @@ npm run dev:h5
 7. 普通用户提交回访，救助人员或管理员查看回访。
 8. 管理员演示公告、用户管理、监督查询和统计。
 
-## 6. 演示前快速检查
+## 7. 演示前快速检查
 
 - 后端健康检查为 `UP`。
 - 电脑端和移动端均能正常访问 `/api`。

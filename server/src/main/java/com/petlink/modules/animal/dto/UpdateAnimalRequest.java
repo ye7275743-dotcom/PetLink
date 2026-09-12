@@ -9,6 +9,8 @@ public class UpdateAnimalRequest {
     private Integer estimatedAgeMonths;
     private String color;
     private String healthCondition;
+    private String personality;
+    private String adoptionRequirements;
     private Integer version;
 
     @JsonIgnore private boolean namePresent;
@@ -17,6 +19,8 @@ public class UpdateAnimalRequest {
     @JsonIgnore private boolean estimatedAgeMonthsPresent;
     @JsonIgnore private boolean colorPresent;
     @JsonIgnore private boolean healthConditionPresent;
+    @JsonIgnore private boolean personalityPresent;
+    @JsonIgnore private boolean adoptionRequirementsPresent;
 
     public String getName() { return name; }
     public void setName(String name) { this.namePresent = true; this.name = name; }
@@ -30,6 +34,10 @@ public class UpdateAnimalRequest {
     public void setColor(String color) { this.colorPresent = true; this.color = color; }
     public String getHealthCondition() { return healthCondition; }
     public void setHealthCondition(String healthCondition) { this.healthConditionPresent = true; this.healthCondition = healthCondition; }
+    public String getPersonality() { return personality; }
+    public void setPersonality(String personality) { this.personalityPresent = true; this.personality = personality; }
+    public String getAdoptionRequirements() { return adoptionRequirements; }
+    public void setAdoptionRequirements(String adoptionRequirements) { this.adoptionRequirementsPresent = true; this.adoptionRequirements = adoptionRequirements; }
     public Integer getVersion() { return version; }
     public void setVersion(Integer version) { this.version = version; }
 
@@ -39,7 +47,10 @@ public class UpdateAnimalRequest {
     public boolean isEstimatedAgeMonthsPresent() { return estimatedAgeMonthsPresent; }
     public boolean isColorPresent() { return colorPresent; }
     public boolean isHealthConditionPresent() { return healthConditionPresent; }
+    public boolean isPersonalityPresent() { return personalityPresent; }
+    public boolean isAdoptionRequirementsPresent() { return adoptionRequirementsPresent; }
     public boolean hasAnyBusinessField() {
-        return namePresent || speciesPresent || sexPresent || estimatedAgeMonthsPresent || colorPresent || healthConditionPresent;
+        return namePresent || speciesPresent || sexPresent || estimatedAgeMonthsPresent || colorPresent || healthConditionPresent
+                || personalityPresent || adoptionRequirementsPresent;
     }
 }

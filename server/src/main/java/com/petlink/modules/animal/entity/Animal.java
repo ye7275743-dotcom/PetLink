@@ -18,6 +18,8 @@ public class Animal {
     private Integer estimatedAgeMonths;
     private String color;
     private String healthCondition;
+    private String personality;
+    private String adoptionRequirements;
     private String status;
     private String suspendReason;
     @Version
@@ -41,6 +43,10 @@ public class Animal {
     public void setColor(String color) { this.color = color; }
     public String getHealthCondition() { return healthCondition; }
     public void setHealthCondition(String healthCondition) { this.healthCondition = healthCondition; }
+    public String getPersonality() { return personality; }
+    public void setPersonality(String personality) { this.personality = personality; }
+    public String getAdoptionRequirements() { return adoptionRequirements; }
+    public void setAdoptionRequirements(String adoptionRequirements) { this.adoptionRequirements = adoptionRequirements; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getSuspendReason() { return suspendReason; }

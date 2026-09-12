@@ -429,6 +429,8 @@ CREATE TABLE `animal` (
     `estimated_age_months` SMALLINT UNSIGNED DEFAULT NULL COMMENT '估算年龄，单位月',
     `color` VARCHAR(100) DEFAULT NULL COMMENT '毛色',
     `health_condition` VARCHAR(1000) NOT NULL COMMENT '当前基础健康情况',
+    `personality` VARCHAR(1000) DEFAULT NULL COMMENT '性格与行为观察',
+    `adoption_requirements` VARCHAR(1000) DEFAULT NULL COMMENT '领养家庭要求',
     `status` VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin
         NOT NULL DEFAULT 'TREATING'
         COMMENT 'TREATING/OBSERVING/AVAILABLE/SUSPENDED/ADOPTED',

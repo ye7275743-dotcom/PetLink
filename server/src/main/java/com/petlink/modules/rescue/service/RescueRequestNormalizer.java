@@ -57,6 +57,8 @@ public class RescueRequestNormalizer {
             if (age != null && (age < 0 || age > 65535)) throw new BusinessException(ErrorCode.INVALID_PARAMETER);
             String color = optionalText(animal.getColor(), 100);
             String healthCondition = requiredText(animal.getHealthCondition(), 1000);
+            String personality = optionalText(animal.getPersonality(), 1000);
+            String adoptionRequirements = optionalText(animal.getAdoptionRequirements(), 1000);
             String initialHealthRecord = optionalText(animal.getInitialHealthRecord(), 2000);
             List<String> tokens = normalizeTokens(animal.getImageTokens());
             totalImages += tokens.size();
@@ -64,7 +66,8 @@ public class RescueRequestNormalizer {
             for (String token : tokens) {
                 if (!allTokens.add(token)) throw new BusinessException(ErrorCode.INVALID_PARAMETER);
             }
-            animals.add(new NormalizedAnimal(name, species, sex, age, color, healthCondition, initialHealthRecord, tokens));
+            animals.add(new NormalizedAnimal(name, species, sex, age, color, healthCondition, personality,
+                    adoptionRequirements, initialHealthRecord, tokens));
         }
         return NormalizedResult.success(animals);
     }
@@ -105,14 +108,20 @@ public class RescueRequestNormalizer {
     }
 
     public static class NormalizedAnimal {
-        private final String name, species, sex, color, healthCondition, initialHealthRecord;
+        private final String name, species, sex, color, healthCondition, personality, adoptionRequirements, initialHealthRecord;
         private final Integer estimatedAgeMonths;
         private final List<String> imageTokens;
         public NormalizedAnimal(String name, String species, String sex, Integer estimatedAgeMonths, String color,
-                                String healthCondition, String initialHealthRecord, List<String> imageTokens) {
+                                String healthCondition, String personality, String adoptionRequirements,
+                                String initialHealthRecord, List<String> imageTokens) {
             this.name=name; this.species=species; this.sex=sex; this.estimatedAgeMonths=estimatedAgeMonths;
-            this.color=color; this.healthCondition=healthCondition; this.initialHealthRecord=initialHealthRecord;
+            this.color=color; this.healthCondition=healthCondition; this.personality=personality;
+            this.adoptionRequirements=adoptionRequirements; this.initialHealthRecord=initialHealthRecord;
             this.imageTokens=imageTokens;
+        }
+        public NormalizedAnimal(String name, String species, String sex, Integer estimatedAgeMonths, String color,
+                                String healthCondition, String initialHealthRecord, List<String> imageTokens) {
+            this(name,species,sex,estimatedAgeMonths,color,healthCondition,null,null,initialHealthRecord,imageTokens);
         }
         public String getName(){ return name; }
         public String getSpecies(){ return species; }
@@ -120,6 +129,8 @@ public class RescueRequestNormalizer {
         public Integer getEstimatedAgeMonths(){ return estimatedAgeMonths; }
         public String getColor(){ return color; }
         public String getHealthCondition(){ return healthCondition; }
+        public String getPersonality(){ return personality; }
+        public String getAdoptionRequirements(){ return adoptionRequirements; }
         public String getInitialHealthRecord(){ return initialHealthRecord; }
         public List<String> getImageTokens(){ return imageTokens; }
     }

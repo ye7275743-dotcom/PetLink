@@ -11,6 +11,7 @@ const routes = [
   {path:'/adopt/:id',component:PublicView,meta:{public:true,publicMode:'animal'}},
   {path:'/news',component:PublicView,meta:{public:true,publicMode:'news'}},
   {path:'/news/:id',component:PublicView,meta:{public:true,publicMode:'notice'}},
+  {path:'/stories',component:PublicView,meta:{public:true,publicMode:'stories'}},
   {path:'/guide',component:PublicView,meta:{public:true,publicMode:'guide'}},
   {path:'/register',component:()=>import('../views/RegisterView.vue'),meta:{public:true}},
   { path:'/login', component:LoginView, meta:{public:true} },
@@ -39,7 +40,7 @@ const router=createRouter({
   }
 })
 const pageTitles = {
-  '/':'宠链 · 救助与领养','/adopt':'寻找伙伴 | 宠链','/news':'平台公告 | 宠链','/guide':'参与指南 | 宠链','/register':'注册 | 宠链',
+  '/':'宠链 · 救助与领养','/adopt':'寻找伙伴 | 宠链','/news':'平台公告 | 宠链','/stories':'救助纪实 | 宠链','/guide':'参与指南 | 宠链','/register':'注册 | 宠链',
   '/login': '登录 | 宠链',
   '/dashboard': '总览看板 | 宠链',
   '/clues': '线索审核 | 宠链',

@@ -134,7 +134,8 @@ public class RescueTaskTransactionalService {
             Animal animal=new Animal();
             animal.setRescueTaskId(taskId); animal.setName(request.getName()); animal.setSpecies(request.getSpecies());
             animal.setSex(request.getSex()); animal.setEstimatedAgeMonths(request.getEstimatedAgeMonths()); animal.setColor(request.getColor());
-            animal.setHealthCondition(request.getHealthCondition()); animal.setStatus("TREATING"); animal.setSuspendReason(null); animal.setVersion(0);
+            animal.setHealthCondition(request.getHealthCondition()); animal.setPersonality(request.getPersonality());
+            animal.setAdoptionRequirements(request.getAdoptionRequirements()); animal.setStatus("TREATING"); animal.setSuspendReason(null); animal.setVersion(0);
             if (animalMapper.insert(animal) != 1) throw new IllegalStateException("animal insert affected rows != 1");
             animals.add(animal);
             if (request.getInitialHealthRecord() != null) {

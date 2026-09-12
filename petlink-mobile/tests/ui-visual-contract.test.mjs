@@ -29,8 +29,8 @@ test('Mobile premium visual layer keeps depth and touch surfaces', () => {
 })
 
 test('Mobile home consumes the generated rescue hero asset', () => {
-  assert.match(home, /petlink-rescue-hero-v1\.jpg/)
-  assert.ok(existsSync(new URL('../src/static/assets/petlink-rescue-hero-v1.jpg', import.meta.url)))
+  assert.match(home, /content\/home-hero\.jpg/)
+  assert.ok(existsSync(new URL('../src/static/assets/content/home-hero.jpg', import.meta.url)))
 })
 
 test('Mobile navigation and actions use semantic SVG icons instead of Unicode glyphs', () => {
