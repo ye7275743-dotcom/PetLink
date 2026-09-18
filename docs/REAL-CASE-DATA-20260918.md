@@ -17,6 +17,15 @@
 | 寄养猫领养闭环 | 动物 13、领养记录 5 | 已领养并回访 | Paradise 公开领养档案 |
 | 高龄犬寄养评估 | 动物 14 | 可领养 | Zuzu 公开领养档案 |
 
+第二批补充档案：
+
+| 场景 | 业务对象 | 当前状态 | 图片/来源 |
+|---|---|---|---|
+| 高龄玳瑁猫寄养评估 | 动物 15 | 可领养，领养申请待审核 | Cashmere 公开领养档案 |
+| 淡三花猫家庭匹配 | 动物 16、领养记录 6 | 已领养并完成回访 | Sally 公开领养档案 |
+| 幼猫成长与拒绝申请分支 | 动物 17 | 可领养，申请已驳回 | Moss 公开领养档案 |
+| 中型犬运动需求评估 | 动物 18 | 可领养 | Bubs 公开领养档案 |
+
 ## 来源
 
 - Marble：<https://bestfriends.org/stories/features/faces-no-kill-cat-heals-injury-style>
@@ -36,3 +45,5 @@ node scripts/seed-real-cases.mjs
 ```
 
 脚本会创建完整状态链，但不会删除旧数据。清理历史自动化案例前，先备份数据库，再按当前快照审阅并执行 `sql/cleanup-20260918-test-cases.sql`；该脚本默认 `ROLLBACK`，确认选中行后才可改为 `COMMIT`。
+
+第二批补充使用 `scripts/seed-real-cases-batch2.mjs`，同样通过正式 REST API 上传图片、创建任务、写入健康记录和领养申请。

@@ -34,6 +34,8 @@ npm ci && npm run dev:h5
 
 如需把去标识化的真实来源案例写入本地数据库，请先确保 `admin`、`rescuer`、`user` 三个演示账号使用同一演示密码并已启动后端，再在项目根目录设置 `PETLINK_REAL_CASE_PASSWORD` 后执行 `node scripts/seed-real-cases.mjs`。脚本通过正式 REST API 写入待审核、待接取、进行中、已完成、可领养、已领养和回访数据，图片来源与使用边界见 `docs/content/PHOTO-ASSET-MAP.md`。旧的 `seed-demo-data.mjs` 和 `seed-demo-task-states.mjs` 仅保留作历史回归参考，不应再向线上库追加数据。
 
+如需继续增加第二批真实来源领养档案，可执行 `node scripts/seed-real-cases-batch2.mjs`；脚本会按动物名称跳过已存在档案，避免重复创建。
+
 ## 生产部署
 
 生产 Compose 配置位于 `deploy/petlink-production/`。当前示例部署使用：
