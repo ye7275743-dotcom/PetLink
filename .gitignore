@@ -15,6 +15,9 @@ deploy/petlink-production/backend/*.jar
 deploy/petlink-production/web/pc/
 deploy/petlink-production/web/mobile/
 output/
+*.snapshot-key
+*.snapshot.enc
+*.snapshot.tar.gz
 
 # Machine-local frontend environment overrides
 petlink-pc/.env.local

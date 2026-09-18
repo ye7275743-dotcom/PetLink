@@ -62,6 +62,21 @@
 
 生产环境请使用 `deploy/petlink-production/.env.example` 生成服务器专用 `.env`，再按 `deploy/petlink-production/README.md` 构建并启动 Compose。不要把服务器 `.env`、数据库导出或 `data/uploads/` 目录复制回公共仓库。
 
+## 私有服务器状态快照
+
+完整生产快照（数据库加上传文件）作为 GitHub **私有 Release** 附件分发，不提交到 Git 源码历史。仓库里不保存解密密钥或生产 `.env`。仅将密钥交给经授权的恢复者，并通过独立安全渠道传递；拥有仓库链接不等于拥有快照解密权限。
+
+下载 Release 中的 `petlink-state-<时间戳>.snapshot.enc` 与对应 SHA-256 清单后，在可信设备上执行：
+
+```bash
+node scripts/secure-snapshot.mjs decrypt \
+  petlink-state-<时间戳>.snapshot.enc \
+  petlink-state-<时间戳>.tar.gz \
+  /受控目录/PetLink-production.snapshot-key
+```
+
+解密器使用 Node.js 内置 AES-256-GCM 并校验认证标签；校验失败时不会留下可用的明文归档。密钥文件应保存在仓库之外的受控目录（权限仅当前用户可读），不要通过 GitHub、普通聊天或提交记录发送。
+
 ## 验证
 
 ```bash
