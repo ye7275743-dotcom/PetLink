@@ -32,7 +32,7 @@ npm ci && npm run dev:h5
 
 电脑端默认端口为 `5173`，移动端 H5 默认端口为 `5174`。完整本地自动化检查见 `scripts/verify-all.sh`。
 
-如需把完整图片案例写入本地数据库，请先确保 `admin`、`rescuer`、`user` 三个演示账号使用同一演示密码并已启动后端，再在项目根目录设置 `PETLINK_DEMO_PASSWORD` 后执行 `node scripts/seed-demo-data.mjs`。脚本会新建带批次标记的数据，不修改已有业务记录。
+如需把去标识化的真实来源案例写入本地数据库，请先确保 `admin`、`rescuer`、`user` 三个演示账号使用同一演示密码并已启动后端，再在项目根目录设置 `PETLINK_REAL_CASE_PASSWORD` 后执行 `node scripts/seed-real-cases.mjs`。脚本通过正式 REST API 写入待审核、待接取、进行中、已完成、可领养、已领养和回访数据，图片来源与使用边界见 `docs/content/PHOTO-ASSET-MAP.md`。旧的 `seed-demo-data.mjs` 和 `seed-demo-task-states.mjs` 仅保留作历史回归参考，不应再向线上库追加数据。
 
 ## 生产部署
 

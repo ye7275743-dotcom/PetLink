@@ -11,6 +11,11 @@ const PASSWORD = process.env.PETLINK_DEMO_PASSWORD
 const TAG = process.env.PETLINK_DEMO_TAG || `演示任务状态-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')}`
 const IMAGE = process.env.PETLINK_DEMO_DOG || join(PROJECT_ROOT, 'docs/demo-assets/demo-black-white-dog.png')
 
+if (process.env.PETLINK_ALLOW_LEGACY_DEMO_DATA !== '1') {
+  console.error('该脚本仅保留作历史回归，已停止追加旧演示数据；请改用 scripts/seed-real-cases.mjs。')
+  process.exit(3)
+}
+
 if (!PASSWORD) { console.error('缺少 PETLINK_DEMO_PASSWORD。'); process.exit(2) }
 
 async function request(path, { method = 'GET', token, body, form, headers: extra = {} } = {}) {

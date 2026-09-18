@@ -36,6 +36,11 @@ const ASSETS = {
   abu: contentFiles('animal-abu-cover.jpg', 'animal-abu-full.jpg', 'animal-abu-life.jpg')
 }
 
+if (process.env.PETLINK_ALLOW_LEGACY_DEMO_DATA !== '1') {
+  console.error('该脚本仅保留作历史回归，已停止追加旧演示数据；请改用 scripts/seed-real-cases.mjs。')
+  process.exit(3)
+}
+
 if (!PASSWORD) {
   console.error('缺少 PETLINK_DEMO_PASSWORD。')
   process.exit(2)
