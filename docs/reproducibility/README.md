@@ -30,17 +30,20 @@
    ./mvnw spring-boot:run
    ```
 
-5. 启动 PC 端和 Mobile H5 端：
+5. 分别在两个终端启动 PC 端和 Mobile H5 端：
 
    ```bash
+   # 终端 A
    cd petlink-pc && npm ci && npm run dev
-   cd ../petlink-mobile && npm ci && npm run dev:h5
+
+   # 终端 B（从仓库根目录执行）
+   cd petlink-mobile && npm ci && npm run dev:h5
    ```
 
-6. 生成与当前版本一致的业务案例。该命令只使用仓库内图片和去标识化字段，不读取生产库：
+6. 在第三个终端生成与当前版本一致的业务案例。该命令只使用仓库内图片和去标识化字段，不读取生产库：
 
    ```bash
-   cd ..
+   # 保持在仓库根目录
    export PETLINK_REAL_CASE_ORIGIN='http://127.0.0.1:8080/api'
    export PETLINK_REAL_CASE_PASSWORD='你为三个本地演示账号设置的密码'
    node scripts/seed-course-fixture.mjs
