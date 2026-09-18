@@ -13,7 +13,7 @@ test('mobile home includes rescue progress, follow-up letters and trust practice
   assert.match(screen, /mobile-timeline/)
   assert.match(screen, /trustPractices/)
   assert.match(content, /回访尊重隐私/)
-  assert.match(screen, /demoNotice/)
+  assert.doesNotMatch(screen, /演示内容说明|demoNotice/)
   assert.match(screen, /图片来源/)
   assert.match(screen, /story\.images/)
   assert.match(screen, /openSource/)

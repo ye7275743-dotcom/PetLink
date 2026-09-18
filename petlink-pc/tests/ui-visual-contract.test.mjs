@@ -54,3 +54,9 @@ test('PC navigation uses the shared semantic SVG icon dictionary', () => {
   assert.match(layout, /<NavIcon class="brand-icon" name="spark"/)
   assert.doesNotMatch(layout, /[↗⌂⌖♡◎♥×]/)
 })
+
+test('PC sidebar reserves a scrollable menu area so logout never covers a menu item', () => {
+  assert.match(layout, /aside\s*\{[\s\S]*display:\s*flex;/)
+  assert.match(layout, /nav\s*\{[\s\S]*overflow-y:\s*auto;/)
+  assert.match(layout, /\.logout\s*\{[\s\S]*position:\s*static;/)
+})

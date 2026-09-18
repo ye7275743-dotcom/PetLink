@@ -36,6 +36,8 @@ npm ci && npm run dev:h5
 
 如需继续增加第二批真实来源领养档案，可执行 `node scripts/seed-real-cases-batch2.mjs`；脚本会按动物名称跳过已存在档案，避免重复创建。
 
+如果需要在全新环境中一次性还原当前课程案例，可按 [`docs/reproducibility/README.md`](docs/reproducibility/README.md) 的顺序初始化数据库、启动后端并执行 `node scripts/seed-course-fixture.mjs`。该流程会生成与当前版本一致的业务状态和案例图片，但不会把生产环境凭据、上传目录或真实个人信息带入仓库。
+
 ## 生产部署
 
 生产 Compose 配置位于 `deploy/petlink-production/`。当前示例部署使用：

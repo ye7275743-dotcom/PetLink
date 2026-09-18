@@ -7,10 +7,14 @@ petlink-mobile/dist/
 # OS/editor noise and generated deployment artifacts
 .DS_Store
 *.log
+**/.env
+**/.env.*
+!**/.env.example
 server/.mvn/dist/
 deploy/petlink-production/backend/*.jar
 deploy/petlink-production/web/pc/
 deploy/petlink-production/web/mobile/
+output/
 
 # Machine-local frontend environment overrides
 petlink-pc/.env.local

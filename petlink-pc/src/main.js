@@ -5,12 +5,16 @@ import App from './App.vue'
 import router from './router/index.js'
 import { useAuth } from './store/auth.js'
 import { authApi } from './api/index.js'
+import { redirectMobileEntry } from './utils/deviceRouting.js'
 import './styles/tokens.css'
 import './styles/app.css'
 
-const app=createApp(App).use(router)
-provideGlobalConfig({locale:zhCn},app,true)
-app.mount('#app')
+// Run before Vue mounts so a phone never briefly renders the desktop shell.
+if (!redirectMobileEntry()) {
+  const app=createApp(App).use(router)
+  provideGlobalConfig({locale:zhCn},app,true)
+  app.mount('#app')
+}
 
 let refreshing=false
 async function refreshOnResume(){

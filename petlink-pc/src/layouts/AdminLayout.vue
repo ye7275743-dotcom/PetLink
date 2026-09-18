@@ -41,9 +41,11 @@ function doLogout(){auth.logout();router.replace('/login')}
 aside {
   position: sticky;
   top: 0;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   padding: 28px 18px 22px;
-  overflow: auto;
+  overflow: hidden;
   color: #f8f3e8;
   background:
     radial-gradient(circle at 20% 10%, rgba(241, 199, 75, 0.14), transparent 23%),
@@ -114,7 +116,12 @@ aside::before {
 
 nav {
   display: grid;
+  flex: 1 1 auto;
   gap: 5px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1px 2px 8px;
+  scrollbar-width: thin;
 }
 
 .nav-item {
@@ -156,10 +163,10 @@ nav {
 }
 
 .logout {
-  position: absolute;
-  right: 18px;
-  bottom: 22px;
-  left: 18px;
+  position: static;
+  width: 100%;
+  flex: 0 0 auto;
+  margin-top: 14px;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -243,8 +250,8 @@ main {
   }
 
   .logout {
-    right: 10px;
-    left: 10px;
+    width: 100%;
+    margin-top: 12px;
   }
 }
 </style>
