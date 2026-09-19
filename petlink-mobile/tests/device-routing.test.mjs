@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { bridgeMobileSessionToPc, openDesktopApp, setViewPreference } from '../src/utils/deviceRouting.js'
+import { bridgeMobileSessionToPc, isMobileDevice, openDesktopApp, redirectDesktopEntry, setViewPreference } from '../src/utils/deviceRouting.js'
 
 function storage() {
   const values = new Map()
@@ -43,4 +43,31 @@ test('invalid view values clear the preference instead of persisting arbitrary i
   assert.match(documentRef.cookie, /petlink_view=mobile/)
   setViewPreference('unexpected', documentRef)
   assert.match(documentRef.cookie, /Max-Age=0/)
+})
+
+test('mobile H5 entry redirects a desktop browser to the PC origin', () => {
+  let replaced = ''
+  const windowRef = {
+    location: { origin: 'http://localhost:8081', protocol: 'http:', hostname: 'localhost', pathname: '/mobile/', replace: value => { replaced = value } },
+    innerWidth: 1440
+  }
+  assert.equal(redirectDesktopEntry({
+    windowRef,
+    navigatorRef: { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+  }), true)
+  assert.equal(replaced, 'http://localhost:8081/')
+  assert.equal(isMobileDevice({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)' }, { innerWidth: 390 }), true)
+})
+
+test('an explicit member handoff may open the H5 shell on a desktop preview', () => {
+  let replaced = ''
+  const windowRef = {
+    location: { origin: 'http://localhost:8081', protocol: 'http:', hostname: 'localhost', pathname: '/mobile/', search: '?view=mobile', replace: value => { replaced = value } },
+    innerWidth: 1440
+  }
+  assert.equal(redirectDesktopEntry({
+    windowRef,
+    navigatorRef: { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+  }), false)
+  assert.equal(replaced, '')
 })

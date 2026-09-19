@@ -3,7 +3,9 @@ import { bridgePcSessionToMobile } from './deviceRouting.js'
 export function memberUrl(screen='home',params={}) {
   const base=import.meta.env.DEV?`${location.protocol}//${location.hostname}:5174/`:'/mobile/'
   const query=new URLSearchParams(params).toString()
-  return `${base}#/pages/${screen}/index${query?'?'+query:''}`
+  // This is an intentional PC → member-service handoff. The marker lets the
+  // shared-origin entry distinguish it from a stale desktop `/mobile/` URL.
+  return `${base}?view=mobile#/pages/${screen}/index${query?'?'+query:''}`
 }
 
 // Explicit, same-origin member handoff; never put credentials in URLs.

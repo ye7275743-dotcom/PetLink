@@ -60,4 +60,17 @@ class JwtAuthenticationFilterTest {
         assertTrue(response.getContentAsString().contains("40302"));
         verify(chain, never()).doFilter(any(), any());
     }
+
+    @Test
+    void staleTokenDoesNotBlockPublicLogin() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/login");
+        request.addHeader("Authorization", "Bearer stale-token");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        verify(chain).doFilter(request, response);
+        verifyNoInteractions(jwtService, mapper);
+    }
 }

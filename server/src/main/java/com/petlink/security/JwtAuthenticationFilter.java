@@ -33,6 +33,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Public authentication endpoints must remain usable even when the
+     * browser sends a stale Bearer token from a previous local database.
+     * Security's permitAll rules are evaluated after filters, so skipping the
+     * JWT parser here is required to make a new login independent of that
+     * stale session.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty() && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        return "/api/auth/login".equals(path)
+                || "/api/auth/register".equals(path)
+                || "/actuator/health".equals(path);
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {

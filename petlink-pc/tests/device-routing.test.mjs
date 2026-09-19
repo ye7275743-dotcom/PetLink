@@ -57,6 +57,22 @@ test('manual view preference overrides automatic detection and does not loop on 
   }), false)
 })
 
+test('a stale mobile preference cannot route a desktop browser into the H5 shell', () => {
+  const cookies = { cookie: 'petlink_view=mobile' }
+  let replaced = ''
+  const desktopWindow = {
+    location: { pathname: '/', replace: value => { replaced = value } },
+    localStorage: storage(),
+    innerWidth: 1440
+  }
+  assert.equal(redirectMobileEntry({
+    windowRef: desktopWindow,
+    documentRef: cookies,
+    navigatorRef: { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+  }), false)
+  assert.equal(replaced, '')
+})
+
 test('mobile entry redirects before the PC shell mounts and keeps the same origin', () => {
   let replaced = ''
   const windowRef = {

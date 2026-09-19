@@ -136,9 +136,12 @@ export function redirectMobileEntry({
   // it to a public mobile page with no permitted actions.
   const currentUser = normalizeUser(readStorage(windowRef.localStorage, 'petlink_pc_user'))
   if (pathname === '/dashboard' && currentUser?.roleCode === 'ADMIN') return false
+  const mobileDevice = isMobileDevice(navigatorRef, windowRef)
+  // A stale `petlink_view=mobile` cookie must not make a desktop browser
+  // render the H5 shell at full width. The PC preference remains supported
+  // as the explicit mobile-profile "切换到电脑版" action.
   const preference = readViewPreference(documentRef)
-  if (preference === 'pc') return false
-  if (preference !== 'mobile' && !isMobileDevice(navigatorRef, windowRef)) return false
+  if (preference === 'pc' || !mobileDevice) return false
   bridgePcSessionToMobile(windowRef.localStorage)
   windowRef.location.replace(mobileUrlFor(pathname, windowRef))
   return true

@@ -15,3 +15,9 @@ petlink:
       - ${PETLINK_CORS_ORIGIN_PC_IP:http://127.0.0.1:5173}
       - ${PETLINK_CORS_ORIGIN_MOBILE:http://localhost:5174}
       - ${PETLINK_CORS_ORIGIN_MOBILE_IP:http://127.0.0.1:5174}
+      # The reproducible local Docker stack serves the built PC and Mobile
+      # clients from Nginx on port 8081. Browsers include an Origin header on
+      # JSON POSTs even when the page and API share that origin, so the bundled
+      # web origin must be allowed as well as the Vite/UniApp dev ports above.
+      - ${PETLINK_CORS_ORIGIN_BUNDLED:http://localhost:8081}
+      - ${PETLINK_CORS_ORIGIN_BUNDLED_IP:http://127.0.0.1:8081}

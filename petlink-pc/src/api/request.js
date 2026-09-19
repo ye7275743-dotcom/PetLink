@@ -11,6 +11,17 @@ function createRequestId(){
   return `web-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`
 }
 
+// Login and registration must never inherit a cached session. A browser can
+// keep a token from an older local database (or from a disabled account); the
+// backend intentionally treats that token as invalid before it reaches the
+// public auth controller. Keeping these requests anonymous makes a fresh
+// login independent from stale browser state.
+const publicAuthPath = /^\/?auth\/(?:login|register)(?:\/|$)/
+function isPublicAuthRequest(config) {
+  const path = String(config?.url || '').split('?')[0].replace(/^\/api\//, '')
+  return publicAuthPath.test(path)
+}
+
 const statusMessages = {
   400: '请求参数不正确',
   401: '登录已失效，请重新登录',
@@ -36,7 +47,7 @@ function safeServerMessage(message, fallback) {
 
 client.interceptors.request.use(config => {
   const { state } = useAuth()
-  if(state.token) config.headers.Authorization = `Bearer ${state.token}`
+  if(state.token && !isPublicAuthRequest(config)) config.headers.Authorization = `Bearer ${state.token}`
   config.headers['X-Request-Id'] = config.headers['X-Request-Id'] || createRequestId()
   return config
 })
